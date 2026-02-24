@@ -199,10 +199,10 @@ export function MoodboardSwipe() {
                             className="glow-pulse h-20 w-20 rounded-full"
                             style={{ background: "rgba(124,58,237,0.3)" }}
                         />
-                        <p className="mt-3 text-lg font-medium text-white/80">
+                        <p className="mt-3 text-lg font-medium" style={{ color: "var(--vibe-text)" }}>
                             Your cyber-soul is taking shape.
                         </p>
-                        <p className="text-sm text-white/40">
+                        <p className="text-sm" style={{ color: "var(--vibe-text-muted)" }}>
                             {currentIndex} vibes captured
                         </p>
                     </motion.div>
@@ -218,10 +218,10 @@ export function MoodboardSwipe() {
                             className="h-1.5 w-6 rounded-full transition-all duration-300"
                             style={{
                                 background: swipedIds.has(card.id)
-                                    ? "rgba(124,58,237,0.8)"
+                                    ? "var(--vibe-primary)"
                                     : i === currentIndex
-                                        ? "rgba(255,255,255,0.5)"
-                                        : "rgba(255,255,255,0.12)",
+                                        ? "var(--vibe-text)"
+                                        : "var(--vibe-surface-border)",
                             }}
                         />
                     ))}
@@ -234,7 +234,8 @@ export function MoodboardSwipe() {
                     initial={{ opacity: 0 }}
                     animate={{ opacity: 1 }}
                     transition={{ delay: 0.8, duration: 0.6 }}
-                    className="mt-3 text-center text-sm tracking-wide text-white/30"
+                    className="mt-3 text-center text-sm tracking-wide"
+                    style={{ color: "var(--vibe-text-muted)" }}
                 >
                     Swipe right to shape your cyber-soul
                 </motion.p>

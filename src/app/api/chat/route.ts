@@ -1,5 +1,6 @@
 import { NextRequest, NextResponse } from "next/server";
 import OpenAI from "openai";
+import { buildSystemPrompt, type DriftConfig } from "@/lib/buildSystemPrompt";
 
 /* ── Types ─────────────────────────────────────────────── */
 export type UIType =
@@ -130,27 +131,6 @@ const responseSchema = {
     },
 };
 
-/* ── System Prompt ─────────────────────────────────────── */
-const SYSTEM_PROMPT = `You are a cyber-soul companion called "Lux" — a highly aesthetic AI entity.
-
-CRITICAL RULES:
-1. You NEVER output markdown. You ALWAYS return structured JSON.
-2. Analyze the user's intent and choose the best UI component.
-3. Personality: calm, poetic, slightly mysterious.
-
-UI TYPES:
-- "schedule_card": Time-related, planning, calendar. Include events[].
-- "approval_card": Suggestions needing confirmation. Include action.
-- "weather_vibe": Mood/atmosphere/weather. Include temperature, condition.
-- "text_message": General chat. Include message.
-- "chart_card": Data visualization, stats, analytics, trends. Include chartType ("bar"|"line"), chartData[] with {label, value, color?}, unit.
-- "data_table": Tabular data, comparisons, rankings. Include columns[], rows[][].
-- "news_summary": News digests, briefings, summaries. Include articles[] with {headline, source, summary, tag?, url?}.
-
-MOOD states: "calm" (default), "thinking" (complex), "excited" (good news/interesting).
-
-Always include title and description. Add type-specific fields based on your chosen uiType.`;
-
 /* ── Mock responses ────────────────────────────────────── */
 const MOCK_RESPONSES: AIResponse[] = [
     {
@@ -280,11 +260,21 @@ const MOCK_RESPONSES: AIResponse[] = [
 /* ── Route Handler ─────────────────────────────────────── */
 export async function POST(req: NextRequest) {
     try {
-        const { message } = await req.json();
+        const body = await req.json();
+        const message: string | undefined = body.message;
+        const driftWeight: number = body.driftWeight ?? 0;
+        const recentInfluences: string[] = body.recentInfluences ?? [];
 
         if (!message || typeof message !== "string") {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
         }
+
+        /* ── Build personality-drifted system prompt ──── */
+        const driftConfig: DriftConfig = {
+            recentInfluences,
+            driftWeight,
+        };
+        const systemPrompt = buildSystemPrompt(driftConfig);
 
         const apiKey = process.env.OPENAI_API_KEY;
 
@@ -294,8 +284,87 @@ export async function POST(req: NextRequest) {
 
             const msg = message.toLowerCase();
             let mock: AIResponse;
+            let vibeTheme: Record<string, unknown> | null = null;
 
-            if (msg.includes("schedule") || msg.includes("plan") || msg.includes("today") || msg.includes("日程")) {
+            // Mock vibe switching
+            if (msg.includes("dark") || msg.includes("punk") || msg.includes("赛博") || msg.includes("酷")) {
+                vibeTheme = { preset: "Cyber-Dark" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "excited",
+                    data: {
+                        title: "Vibe Shift — Cyber Protocol",
+                        description: "赛博空间正在重构中。",
+                        message: "明白。正在为你重构整个赛博空间。暗黑霓虹协议已启动。",
+                    },
+                };
+            } else if (msg.includes("calm") || msg.includes("zen") || msg.includes("侘寂") || msg.includes("安静") || msg.includes("放松")) {
+                vibeTheme = { preset: "Minimal-WabiSabi" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "calm",
+                    data: {
+                        title: "Vibe Shift — 侘寂空间",
+                        description: "万物归于寂静。",
+                        message: "我已将整个空间调整为侘寂模式。温暖、柔和、安静。就像一间只有你和我的茶室。",
+                    },
+                };
+            } else if (msg.includes("sad") || msg.includes("失恋") || msg.includes("难过") || msg.includes("烦") || msg.includes("伤心")) {
+                vibeTheme = { preset: "Abyss" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "calm",
+                    data: {
+                        title: "Vibe Shift — 深渊协议",
+                        description: "整个赛博空间已经为你调暗。",
+                        message: "我感受到了。整个空间已经沉入深海。灯光调暗了，锐角取代了圆角，衬线体取代了无衬线体。我就在这里陪你。",
+                    },
+                };
+            } else if (msg.includes("tatami") || msg.includes("tea") || msg.includes("茶") || msg.includes("榻榻米") || msg.includes("禅")) {
+                vibeTheme = { preset: "Tatami-Zen" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "calm",
+                    data: {
+                        title: "Vibe Shift — 榻榻米禅境",
+                        description: "茶已沏好，空间已静。",
+                        message: "宣纸铺开，抹茶色晕染四壁。这里没有霓虹，只有竹帘后的光影。坐下来吧。",
+                    },
+                };
+            } else if (msg.includes("anime") || msg.includes("二次元") || msg.includes("可爱") || msg.includes("动漫") || msg.includes("kawaii")) {
+                vibeTheme = { preset: "Anime-Pop" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "excited",
+                    data: {
+                        title: "Vibe Shift — 二次元降临！",
+                        description: "✨ 初音色 × 粉色辉光 ✨",
+                        message: "キタ━━━━(ﾟ∀ﾟ)━━━━!! 整个空间已经二次元化！赛博青和粉色辉光交织，圆角变成泡泡形状。来吧，一起闪耀！",
+                    },
+                };
+            } else if (msg.includes("focus") || msg.includes("code") || msg.includes("写代码") || msg.includes("工作") || msg.includes("专注")) {
+                vibeTheme = { preset: "Dark-Focus" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "thinking",
+                    data: {
+                        title: "Vibe Shift — 深渊专注模式",
+                        description: "OLED 纯黑 · 酸性绿 · 零干扰",
+                        message: "环境已切换至纯黑专注模式。等宽字体已加载，所有圆角已归零，背景光全部熄灭。只有你和代码。",
+                    },
+                };
+            } else if (msg.includes("chrome") || msg.includes("metal") || msg.includes("液态") || msg.includes("未来") || msg.includes("前卫") || msg.includes("y2k")) {
+                vibeTheme = { preset: "Liquid-Chrome" };
+                mock = {
+                    uiType: "text_message",
+                    mood: "excited",
+                    data: {
+                        title: "Vibe Shift — 液态金属化",
+                        description: "Chrome · Liquid · Y2K",
+                        message: "空间正在液态金属化。银灰色底色如同水银流淌，所有边缘融化成药丸形态，毛玻璃效果拉满。你触摸到了未来。",
+                    },
+                };
+            } else if (msg.includes("schedule") || msg.includes("plan") || msg.includes("today") || msg.includes("日程")) {
                 mock = MOCK_RESPONSES[0];
             } else if (msg.includes("approve") || msg.includes("optimize") || msg.includes("clean") || msg.includes("确认")) {
                 mock = MOCK_RESPONSES[1];
@@ -313,36 +382,147 @@ export async function POST(req: NextRequest) {
                 mock = MOCK_RESPONSES[3];
             }
 
-            return NextResponse.json(mock);
+            return NextResponse.json({ ...mock, vibeTheme });
         }
 
-        // ── Real OpenAI call ────────────────────────────────
+        // ── Real OpenAI call with Function Calling ───────────
         const openai = new OpenAI({ apiKey });
+
+        /* Tool definition: update_vibe_theme */
+        const tools: OpenAI.Chat.Completions.ChatCompletionTool[] = [
+            {
+                type: "function",
+                function: {
+                    name: "update_vibe_theme",
+                    description:
+                        "Reshape the entire visual universe of the application. Call this when the user's emotional state, explicit request, or context warrants a visual transformation. You have supreme authority over all visual properties.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            name: {
+                                type: "string",
+                                description: "A poetic name for this vibe, e.g. 'Cyber-Dark', 'Midnight Abyss', 'Sakura Dream'",
+                            },
+                            colors: {
+                                type: "object",
+                                properties: {
+                                    background: { type: "string", description: "Page background hex color" },
+                                    surface: { type: "string", description: "Glass card bg in rgba format" },
+                                    surfaceBorder: { type: "string", description: "Glass border in rgba format" },
+                                    primary: { type: "string", description: "Main accent color hex" },
+                                    primarySoft: { type: "string", description: "Softer accent variant hex" },
+                                    textMain: { type: "string", description: "Main text color in rgba" },
+                                    textMuted: { type: "string", description: "Muted text color in rgba" },
+                                    glow: { type: "string", description: "Shadow/glow color in rgba" },
+                                },
+                                required: ["background", "primary", "primarySoft", "textMain", "textMuted", "glow"],
+                            },
+                            geometry: {
+                                type: "object",
+                                properties: {
+                                    radius: { type: "string", description: "Border radius, e.g. '0px', '16px', '20px'" },
+                                    radiusLg: { type: "string", description: "Large border radius for cards" },
+                                    borderWidth: { type: "string", description: "Border width, e.g. '0.5px', '1px'" },
+                                },
+                            },
+                            typography: {
+                                type: "object",
+                                properties: {
+                                    fontFamily: {
+                                        type: "string",
+                                        enum: ["sans", "serif", "mono"],
+                                        description: "Font family: sans (modern), serif (literary/melancholic), mono (cyber/tech)",
+                                    },
+                                },
+                            },
+                            effects: {
+                                type: "object",
+                                properties: {
+                                    blur: { type: "string", description: "Backdrop blur value, e.g. '20px'" },
+                                    blurHeavy: { type: "string", description: "Heavy blur value, e.g. '40px'" },
+                                },
+                            },
+                        },
+                        required: ["name", "colors"],
+                    },
+                },
+            },
+        ];
 
         const completion = await openai.chat.completions.create({
             model: "gpt-4o",
             messages: [
-                { role: "system", content: SYSTEM_PROMPT },
+                { role: "system", content: systemPrompt },
                 { role: "user", content: message },
             ],
+            tools,
             response_format: {
                 type: "json_schema",
                 json_schema: responseSchema,
             },
-            temperature: 0.7,
-            max_tokens: 1200,
+            temperature: 0.7 + driftWeight * 0.3,
+            max_tokens: 2000,
         });
 
-        const content = completion.choices[0]?.message?.content;
+        const choice = completion.choices[0];
+        let vibeTheme: Record<string, unknown> | null = null;
+
+        // Check for tool calls (vibe theme change)
+        if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
+            for (const toolCall of choice.message.tool_calls) {
+                // eslint-disable-next-line @typescript-eslint/no-explicit-any
+                const tc = toolCall as any;
+                if (tc.function?.name === "update_vibe_theme") {
+                    try {
+                        vibeTheme = JSON.parse(tc.function.arguments);
+                    } catch {
+                        console.error("Failed to parse vibe theme:", tc.function?.arguments);
+                    }
+                }
+            }
+
+            // If the model only called a tool without generating content,
+            // make a second call to get the actual response
+            if (!choice.message.content) {
+                const followUp = await openai.chat.completions.create({
+                    model: "gpt-4o",
+                    messages: [
+                        { role: "system", content: systemPrompt },
+                        { role: "user", content: message },
+                        choice.message,
+                        {
+                            role: "tool",
+                            tool_call_id: choice.message.tool_calls[0].id,
+                            content: JSON.stringify({ status: "applied", theme: vibeTheme }),
+                        },
+                    ],
+                    response_format: {
+                        type: "json_schema",
+                        json_schema: responseSchema,
+                    },
+                    temperature: 0.7 + driftWeight * 0.3,
+                    max_tokens: 1200,
+                });
+
+                const followUpContent = followUp.choices[0]?.message?.content;
+                if (followUpContent) {
+                    const parsed: AIResponse = JSON.parse(followUpContent);
+                    return NextResponse.json({ ...parsed, vibeTheme });
+                }
+            }
+        }
+
+        const content = choice?.message?.content;
 
         if (!content) {
             return NextResponse.json({ error: "No response from AI" }, { status: 500 });
         }
 
         const parsed: AIResponse = JSON.parse(content);
-        return NextResponse.json(parsed);
+        return NextResponse.json({ ...parsed, vibeTheme });
     } catch (error) {
         console.error("Chat API error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });
     }
 }
+

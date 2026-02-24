@@ -1,10 +1,23 @@
 import type { Metadata, Viewport } from "next";
-import { Inter } from "next/font/google";
+import { Inter, Playfair_Display, JetBrains_Mono } from "next/font/google";
 import "./globals.css";
-import { BottomNav } from "@/components/BottomNav";
+import { AppShell } from "@/components/AppShell";
 
+/* ── Three font families for the Vibe Engine ──────────── */
 const inter = Inter({
   variable: "--font-inter",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const playfair = Playfair_Display({
+  variable: "--font-playfair",
+  subsets: ["latin"],
+  display: "swap",
+});
+
+const jetbrains = JetBrains_Mono({
+  variable: "--font-jetbrains",
   subsets: ["latin"],
   display: "swap",
 });
@@ -27,12 +40,10 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" className="dark">
-      <body className={`${inter.variable} antialiased`}>
-        {/* Main content area — pad bottom for nav */}
-        <main className="min-h-screen pb-24">{children}</main>
-
-        {/* Glassmorphism bottom nav */}
-        <BottomNav />
+      <body
+        className={`${inter.variable} ${playfair.variable} ${jetbrains.variable} antialiased`}
+      >
+        <AppShell>{children}</AppShell>
       </body>
     </html>
   );

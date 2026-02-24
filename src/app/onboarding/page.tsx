@@ -17,7 +17,7 @@ export default function OnboardingPage() {
             </div>
 
             {/* Heading */}
-            <h1 className="mb-4 text-center text-2xl font-semibold tracking-tight text-white/80 sm:text-3xl">
+            <h1 className="mb-4 text-center text-2xl font-semibold tracking-tight sm:text-3xl" style={{ color: "var(--vibe-text)" }}>
                 What speaks to you?
             </h1>
 

@@ -4,6 +4,7 @@ import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
 import { Home, Compass, Settings } from "lucide-react";
+import { useThemeStore } from "@/store/useThemeStore";
 
 const navItems = [
     { id: "home", label: "Home", icon: Home, href: "/" },
@@ -13,17 +14,21 @@ const navItems = [
 
 export function BottomNav() {
     const pathname = usePathname();
+    const theme = useThemeStore((s) => s.currentTheme);
 
     return (
         <nav className="fixed bottom-6 left-1/2 z-50 -translate-x-1/2">
             {/* Floating glassmorphism pill */}
             <div
-                className="flex items-center gap-1 rounded-2xl border
-                   px-3 py-2 shadow-2xl backdrop-blur-2xl"
+                className="flex items-center gap-1 border
+                   px-3 py-2 shadow-2xl vibe-transition"
                 style={{
-                    background: "rgba(255, 255, 255, 0.06)",
-                    borderColor: "rgba(255, 255, 255, 0.1)",
+                    background: theme.colors.surface,
+                    borderColor: theme.colors.surfaceBorder,
+                    borderRadius: theme.geometry.radiusLg,
                     boxShadow: "0 8px 32px rgba(0,0,0,0.4)",
+                    backdropFilter: `blur(${theme.effects.blurHeavy})`,
+                    WebkitBackdropFilter: `blur(${theme.effects.blurHeavy})`,
                 }}
             >
                 {navItems.map((item) => {
@@ -47,7 +52,7 @@ export function BottomNav() {
                                         className="absolute inset-0 rounded-xl"
                                         style={{
                                             background:
-                                                "radial-gradient(ellipse at center, rgba(124,58,237,0.15) 0%, transparent 70%)",
+                                                `radial-gradient(ellipse at center, ${theme.colors.glow} 0%, transparent 70%)`,
                                         }}
                                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                     />
@@ -56,7 +61,7 @@ export function BottomNav() {
                                 {/* Icon */}
                                 <motion.div
                                     animate={{
-                                        color: isActive ? "#a78bfa" : "#71717a",
+                                        color: isActive ? theme.colors.primary : theme.colors.textMuted,
                                         scale: isActive ? 1.1 : 1,
                                     }}
                                     transition={{ type: "spring", stiffness: 400, damping: 25 }}
@@ -67,7 +72,7 @@ export function BottomNav() {
                                 {/* Label */}
                                 <span
                                     className="text-[10px] font-medium tracking-wide transition-colors duration-200"
-                                    style={{ color: isActive ? "#a78bfa" : "#71717a" }}
+                                    style={{ color: isActive ? theme.colors.primary : theme.colors.textMuted }}
                                 >
                                     {item.label}
                                 </span>
@@ -78,7 +83,7 @@ export function BottomNav() {
                                         layoutId="nav-dot"
                                         className="absolute -bottom-0.5 h-[3px] w-5 rounded-full"
                                         style={{
-                                            background: "linear-gradient(90deg, #7c3aed, #a78bfa)",
+                                            background: `linear-gradient(90deg, ${theme.colors.primary}, ${theme.colors.primarySoft})`,
                                         }}
                                         transition={{ type: "spring", stiffness: 350, damping: 30 }}
                                     />

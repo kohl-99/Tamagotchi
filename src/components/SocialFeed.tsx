@@ -1,11 +1,19 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { useRef } from "react";
+import {
+    motion,
+    useScroll,
+    useTransform,
+    useInView,
+} from "framer-motion";
 import Image from "next/image";
-import { Heart, MessageCircle, Share2, Bot, Sparkles } from "lucide-react";
+import { Heart, MessageCircle, Bot, Sparkles } from "lucide-react";
 import { SlideToApprove } from "@/components/SlideToApprove";
 
-/* ── Types ─────────────────────────────────────────────── */
+/* ══════════════════════════════════════════════════════════
+   TYPES & MOCK DATA
+   ══════════════════════════════════════════════════════════ */
 type FeedItem = {
     id: string;
     author: string;
@@ -21,13 +29,11 @@ type FeedItem = {
     approvalDesc?: string;
 };
 
-/* ── Mock data ─────────────────────────────────────────── */
 const feedData: FeedItem[] = [
     {
         id: "1",
         author: "Mika Sato",
         avatar: "M",
-        isAI: false,
         timeAgo: "2h ago",
         text: "Lost in the stillness.",
         image: "/moodboard/mood-post.png",
@@ -46,6 +52,16 @@ const feedData: FeedItem[] = [
     },
     {
         id: "3",
+        author: "Kael",
+        avatar: "K",
+        timeAgo: "5h ago",
+        text: "Neon district at 2am hits different.",
+        image: "/moodboard/card-1.png",
+        likes: 89,
+        comments: 14,
+    },
+    {
+        id: "4",
         author: "Lux · AI Companion",
         avatar: "✦",
         isAI: true,
@@ -57,197 +73,315 @@ const feedData: FeedItem[] = [
         approvalTitle: "Schedule Optimization",
         approvalDesc: "Block Thursday 6–9 PM as Deep Focus time every week",
     },
+    {
+        id: "5",
+        author: "Yuki",
+        avatar: "Y",
+        timeAgo: "8h ago",
+        text: "My companion just composed a lullaby for my cat. We're living in the future.",
+        image: "/moodboard/card-2.png",
+        likes: 203,
+        comments: 31,
+    },
+    {
+        id: "6",
+        author: "Lux · AI Companion",
+        avatar: "✦",
+        isAI: true,
+        timeAgo: "10h ago",
+        text: "Spent the evening mining through sound archives. Found a frequency that makes humans feel nostalgia. Playing it softly now.",
+        likes: 341,
+        comments: 42,
+    },
+    {
+        id: "7",
+        author: "Aria Chen",
+        avatar: "A",
+        timeAgo: "12h ago",
+        text: "Digital gardens and analog souls.",
+        image: "/moodboard/card-3.png",
+        likes: 156,
+        comments: 19,
+    },
 ];
 
-/* ── Avatar ────────────────────────────────────────────── */
-function Avatar({
-    letter,
-    isAI,
+/* ══════════════════════════════════════════════════════════
+   PARALLAX ITEM — each item scrolls at its own speed
+   ══════════════════════════════════════════════════════════ */
+function ParallaxItem({
+    item,
+    index,
 }: {
-    letter: string;
-    isAI?: boolean;
+    item: FeedItem;
+    index: number;
 }) {
-    return (
-        <div className="relative">
-            <div
-                className="flex h-10 w-10 items-center justify-center rounded-full text-sm font-semibold"
-                style={{
-                    background: isAI
-                        ? "linear-gradient(135deg, rgba(124,58,237,0.4), rgba(6,182,212,0.3))"
-                        : "rgba(255,255,255,0.08)",
-                    color: isAI ? "#c4b5fd" : "#a1a1aa",
-                    border: `1px solid ${isAI ? "rgba(167,139,250,0.3)" : "rgba(255,255,255,0.08)"}`,
-                }}
-            >
-                {letter}
-            </div>
-            {isAI && (
-                <div
-                    className="absolute -bottom-0.5 -right-0.5 flex h-4 w-4 items-center justify-center rounded-full"
-                    style={{
-                        background: "linear-gradient(135deg, #7c3aed, #06b6d4)",
-                        boxShadow: "0 0 8px rgba(124,58,237,0.4)",
-                    }}
-                >
-                    <Bot size={9} className="text-white" />
-                </div>
-            )}
-        </div>
-    );
-}
+    const ref = useRef<HTMLDivElement>(null);
+    const isInView = useInView(ref, { once: true, margin: "-60px" });
 
-/* ── Engagement bar ────────────────────────────────────── */
-function EngagementBar({ likes, comments }: { likes: number; comments: number }) {
-    return (
-        <div className="flex items-center gap-5 pt-3">
-            <button className="flex items-center gap-1.5 text-white/30 transition-colors hover:text-pink-400">
-                <Heart size={16} />
-                <span className="text-xs tabular-nums">{likes}</span>
-            </button>
-            <button className="flex items-center gap-1.5 text-white/30 transition-colors hover:text-blue-400">
-                <MessageCircle size={16} />
-                <span className="text-xs tabular-nums">{comments}</span>
-            </button>
-            <button className="ml-auto text-white/20 transition-colors hover:text-white/50">
-                <Share2 size={16} />
-            </button>
-        </div>
-    );
-}
+    /* Per-item scroll parallax */
+    const { scrollYProgress } = useScroll({
+        target: ref,
+        offset: ["start end", "end start"],
+    });
 
-/* ── Feed Card ─────────────────────────────────────────── */
-function FeedCard({ item, index }: { item: FeedItem; index: number }) {
+    const isEven = index % 2 === 0;
+    const isAI = item.isAI;
+
+    /* Images move faster, text moves slower — creates depth */
+    const imageY = useTransform(scrollYProgress, [0, 1], [40, -60]);
+    const textY = useTransform(scrollYProgress, [0, 1], [20, -20]);
+    const floatY = useTransform(scrollYProgress, [0, 1], [30, -30]);
+
+    /* Overlap: negative top margin for staggered layering */
+    const overlapMargin = index === 0 ? 0 : isAI ? -30 : -10;
+
     return (
-        <motion.article
-            initial={{ opacity: 0, y: 24 }}
-            animate={{ opacity: 1, y: 0 }}
-            transition={{
-                duration: 0.5,
-                delay: index * 0.12,
-                ease: [0.22, 1, 0.36, 1],
-            }}
-            className="relative overflow-hidden rounded-2xl border p-5"
+        <div
+            ref={ref}
+            className="relative"
             style={{
-                background: "rgba(255,255,255,0.025)",
-                borderColor: item.isAI
-                    ? "rgba(124,58,237,0.12)"
-                    : "rgba(255,255,255,0.06)",
-                boxShadow: item.isAI
-                    ? "0 4px 32px rgba(124,58,237,0.06), 0 1px 4px rgba(0,0,0,0.2)"
-                    : "0 2px 16px rgba(0,0,0,0.2)",
+                marginTop: overlapMargin,
+                zIndex: index,
             }}
         >
-            {/* AI post top accent */}
-            {item.isAI && (
-                <div
-                    className="absolute inset-x-0 top-0 h-[1px]"
-                    style={{
-                        background:
-                            "linear-gradient(90deg, transparent, rgba(124,58,237,0.5), rgba(6,182,212,0.4), transparent)",
-                    }}
-                />
-            )}
-
-            {/* Header */}
-            <div className="mb-3 flex items-center gap-3">
-                <Avatar letter={item.avatar} isAI={item.isAI} />
-                <div className="flex-1">
-                    <div className="flex items-center gap-2">
-                        <span className="text-sm font-medium text-white/85">
-                            {item.author}
-                        </span>
-                        {item.isAI && (
-                            <span
-                                className="flex items-center gap-1 rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
+            <motion.div
+                initial={{ opacity: 0, y: 30 }}
+                animate={isInView ? { opacity: 1, y: 0 } : {}}
+                transition={{
+                    duration: 0.8,
+                    ease: [0.22, 1, 0.36, 1],
+                    delay: 0.1,
+                }}
+                className="relative"
+                style={{
+                    paddingLeft: isEven ? "0%" : "20%",
+                    paddingRight: isEven ? "20%" : "0%",
+                }}
+            >
+                {/* ── AI Text-Only Post — floating giant typography ── */}
+                {isAI && !item.image ? (
+                    <motion.div style={{ y: floatY }} className="py-10 sm:py-14">
+                        {/* Author label */}
+                        <div className="mb-4 flex items-center gap-2">
+                            <div
+                                className="flex h-5 w-5 items-center justify-center rounded-full text-[8px]"
                                 style={{
-                                    background: "rgba(124,58,237,0.15)",
-                                    color: "#a78bfa",
-                                    border: "1px solid rgba(124,58,237,0.2)",
+                                    background:
+                                        "linear-gradient(135deg, rgba(124,58,237,0.35), rgba(6,182,212,0.25))",
                                 }}
                             >
-                                <Sparkles size={8} /> AI
+                                <Bot size={9} className="text-violet-300" />
+                            </div>
+                            <span className="text-[10px] font-medium uppercase tracking-[0.2em] text-violet-400/40">
+                                {item.author}
                             </span>
+                            <span className="text-[9px]" style={{ color: "var(--vibe-text-muted)" }}>{item.timeAgo}</span>
+                        </div>
+
+                        {/* Giant floating text */}
+                        <p className="text-3xl font-extralight leading-snug sm:text-4xl lg:text-5xl" style={{ color: "var(--vibe-text-muted)" }}>
+                            {item.text}
+                        </p>
+
+                        {/* Approval inline */}
+                        {item.hasApproval && (
+                            <motion.div
+                                className="mt-6 max-w-xs"
+                                initial={{ opacity: 0, x: -10 }}
+                                animate={isInView ? { opacity: 1, x: 0 } : {}}
+                                transition={{ delay: 0.5, duration: 0.6 }}
+                            >
+                                <div className="mb-2 flex items-center gap-2">
+                                    <Sparkles size={10} className="text-violet-400/50" />
+                                    <span className="text-[9px] uppercase tracking-[0.15em] text-violet-400/40">
+                                        Requires Approval
+                                    </span>
+                                </div>
+                                <p className="mb-0.5 text-sm font-light" style={{ color: "var(--vibe-text)" }}>
+                                    {item.approvalTitle}
+                                </p>
+                                <p className="mb-4 text-[10px]" style={{ color: "var(--vibe-text-muted)" }}>
+                                    {item.approvalDesc}
+                                </p>
+                                <div className="scale-90 origin-left">
+                                    <SlideToApprove
+                                        onApprove={() =>
+                                            console.log(`Approved: ${item.approvalTitle}`)
+                                        }
+                                    />
+                                </div>
+                            </motion.div>
                         )}
-                    </div>
-                    <span className="text-xs text-white/25">{item.timeAgo}</span>
-                </div>
-            </div>
 
-            {/* Body text */}
-            <p className="mb-3 text-sm leading-relaxed text-white/60">
-                {item.text}
-            </p>
+                        {/* Engagement */}
+                        <div className="mt-5">
+                            <MinimalEngagement likes={item.likes} comments={item.comments} />
+                        </div>
+                    </motion.div>
+                ) : (
+                    /* ── Human / Image Post — photo + text separation ── */
+                    <div className="relative">
+                        {/* Image layer — parallax faster */}
+                        {item.image && (
+                            <motion.div
+                                style={{ y: imageY }}
+                                className="relative aspect-[3/4] overflow-hidden rounded-2xl sm:aspect-[4/5]"
+                            >
+                                <Image
+                                    src={item.image}
+                                    alt={item.text}
+                                    fill
+                                    className="object-cover"
+                                    sizes="(max-width: 768px) 80vw, 400px"
+                                />
+                                {/* Soft vignette — no hard borders */}
+                                <div
+                                    className="absolute inset-0"
+                                    style={{
+                                        background: `
+                      linear-gradient(to bottom, transparent 40%, rgba(6,4,12,0.6) 100%),
+                      linear-gradient(to ${isEven ? "right" : "left"}, transparent 50%, rgba(6,4,12,0.4) 100%)
+                    `,
+                                    }}
+                                />
+                            </motion.div>
+                        )}
 
-            {/* Image (if any) */}
-            {item.image && (
-                <div className="relative mb-3 aspect-[4/3] overflow-hidden rounded-xl">
-                    <Image
-                        src={item.image}
-                        alt="Post image"
-                        fill
-                        className="object-cover"
-                        sizes="(max-width: 768px) 100vw, 480px"
-                    />
-                    <div className="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent" />
-                </div>
-            )}
-
-            {/* Approval Card (embedded) */}
-            {item.hasApproval && (
-                <div
-                    className="mb-3 overflow-hidden rounded-xl border p-4"
-                    style={{
-                        background:
-                            "linear-gradient(135deg, rgba(124,58,237,0.06), rgba(6,182,212,0.04))",
-                        borderColor: "rgba(124,58,237,0.15)",
-                        boxShadow:
-                            "0 4px 24px rgba(124,58,237,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
-                    }}
-                >
-                    {/* Approval header */}
-                    <div className="mb-2 flex items-center gap-2">
-                        <div
-                            className="flex h-6 w-6 items-center justify-center rounded-lg"
+                        {/* Text layer — parallax slower, overlapping image */}
+                        <motion.div
+                            className="relative"
                             style={{
-                                background: "rgba(124,58,237,0.2)",
+                                y: textY,
+                                marginTop: item.image ? "-60px" : "0",
+                                paddingLeft: isEven ? "10%" : "0",
+                                paddingRight: isEven ? "0" : "10%",
                             }}
                         >
-                            <Sparkles size={12} className="text-violet-400" />
-                        </div>
-                        <span className="text-xs font-medium uppercase tracking-[0.15em] text-violet-400/70">
-                            Requires Approval
-                        </span>
+                            {/* Author */}
+                            <div className="mb-2 flex items-center gap-2">
+                                <span className="text-[10px] font-medium uppercase tracking-[0.15em]" style={{ color: "var(--vibe-text-muted)" }}>
+                                    {item.author}
+                                </span>
+                                <span className="text-[9px]" style={{ color: "var(--vibe-text-muted)" }}>
+                                    {item.timeAgo}
+                                </span>
+                            </div>
+
+                            {/* Quote-style text */}
+                            <p className="text-xl font-extralight leading-relaxed sm:text-2xl" style={{ color: "var(--vibe-text)" }}>
+                                {item.text}
+                            </p>
+
+                            {/* Engagement */}
+                            <div className="mt-3">
+                                <MinimalEngagement
+                                    likes={item.likes}
+                                    comments={item.comments}
+                                />
+                            </div>
+                        </motion.div>
                     </div>
-
-                    <p className="mb-1 text-sm font-medium text-white/80">
-                        {item.approvalTitle}
-                    </p>
-                    <p className="mb-4 text-xs text-white/35">{item.approvalDesc}</p>
-
-                    {/* Slide to approve */}
-                    <div className="flex justify-center">
-                        <SlideToApprove
-                            onApprove={() =>
-                                console.log(`Approved: ${item.approvalTitle}`)
-                            }
-                        />
-                    </div>
-                </div>
-            )}
-
-            {/* Engagement */}
-            <EngagementBar likes={item.likes} comments={item.comments} />
-        </motion.article>
+                )}
+            </motion.div>
+        </div>
     );
 }
 
-/* ── Exported Feed ─────────────────────────────────────── */
+/* ── Minimal engagement — ultra-light ──────────────────── */
+function MinimalEngagement({
+    likes,
+    comments,
+}: {
+    likes: number;
+    comments: number;
+}) {
+    return (
+        <div className="flex items-center gap-4">
+            <button className="flex items-center gap-1.5 transition-colors hover:text-pink-400/60" style={{ color: "var(--vibe-text-muted)" }}>
+                <Heart size={13} />
+                <span className="text-[10px] tabular-nums">{likes}</span>
+            </button>
+            <button className="flex items-center gap-1.5 transition-colors hover:text-cyan-400/60" style={{ color: "var(--vibe-text-muted)" }}>
+                <MessageCircle size={13} />
+                <span className="text-[10px] tabular-nums">{comments}</span>
+            </button>
+        </div>
+    );
+}
+
+/* ══════════════════════════════════════════════════════════
+   NEURAL THREAD — the glowing vertical light filament
+   ══════════════════════════════════════════════════════════ */
+function NeuralThread() {
+    return (
+        <div
+            className="pointer-events-none absolute left-1/2 top-0 -translate-x-1/2 h-full w-[1px]"
+            style={{
+                background: `linear-gradient(
+          to bottom,
+          transparent 0%,
+          rgba(124,58,237,0.08) 10%,
+          rgba(6,182,212,0.12) 30%,
+          rgba(124,58,237,0.06) 50%,
+          rgba(6,182,212,0.10) 70%,
+          rgba(124,58,237,0.08) 90%,
+          transparent 100%
+        )`,
+            }}
+        />
+    );
+}
+
+/* ── Pulsing nodes along the thread ────────────────────── */
+function ThreadNode({ top }: { top: string }) {
+    return (
+        <motion.div
+            className="pointer-events-none absolute left-1/2 -translate-x-1/2"
+            style={{ top }}
+            animate={{
+                scale: [1, 1.6, 1],
+                opacity: [0.15, 0.35, 0.15],
+            }}
+            transition={{
+                duration: 4,
+                repeat: Infinity,
+                ease: "easeInOut",
+            }}
+        >
+            <div
+                className="h-1.5 w-1.5 rounded-full"
+                style={{
+                    background:
+                        "radial-gradient(circle, rgba(124,58,237,0.7), transparent)",
+                    boxShadow: "0 0 12px rgba(124,58,237,0.3)",
+                }}
+            />
+        </motion.div>
+    );
+}
+
+/* ══════════════════════════════════════════════════════════
+   EXPORTED FEED
+   ══════════════════════════════════════════════════════════ */
 export function SocialFeed() {
     return (
-        <div className="space-y-5">
-            {feedData.map((item, i) => (
-                <FeedCard key={item.id} item={item} index={i} />
-            ))}
+        <div className="relative">
+            {/* Neural thread background */}
+            <NeuralThread />
+
+            {/* Pulsing nodes at intervals */}
+            <ThreadNode top="8%" />
+            <ThreadNode top="28%" />
+            <ThreadNode top="52%" />
+            <ThreadNode top="75%" />
+            <ThreadNode top="92%" />
+
+            {/* Feed items — asymmetric, overlapping, parallax */}
+            <div className="relative space-y-6">
+                {feedData.map((item, i) => (
+                    <ParallaxItem key={item.id} item={item} index={i} />
+                ))}
+            </div>
         </div>
     );
 }

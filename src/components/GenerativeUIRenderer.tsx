@@ -1,24 +1,25 @@
 "use client";
 
-import { motion } from "framer-motion";
+import { motion, useMotionValue, useTransform } from "framer-motion";
+import { useMemo } from "react";
 import {
     Calendar,
     Clock,
-    MapPin,
-    Cloud,
-    Thermometer,
     Sparkles,
+    Cloud,
     MessageSquare,
     BarChart3,
     Table2,
     Newspaper,
     TrendingUp,
     TrendingDown,
-    ExternalLink,
+    CheckCircle,
 } from "lucide-react";
 import { SlideToApprove } from "@/components/SlideToApprove";
+import { usePetStore } from "@/store/usePetStore";
+import { useThemeStore } from "@/store/useThemeStore";
 
-/* ── Shared types (mirrors API) ────────────────────────── */
+/* ── Types ─────────────────────────────────────────────── */
 type UIType =
     | "schedule_card"
     | "approval_card"
@@ -43,371 +44,334 @@ interface AIResponseData {
     unit?: string;
     columns?: string[];
     rows?: string[][];
-    articles?: { headline: string; source: string; summary: string; tag?: string; url?: string }[];
+    articles?: {
+        headline: string;
+        source: string;
+        summary: string;
+        tag?: string;
+        url?: string;
+    }[];
     [key: string]: unknown;
 }
 
-export interface AIResponseUI {
+interface AIResponseUI {
     uiType: UIType;
     mood: Mood;
     data: AIResponseData;
 }
 
-/* ── Schedule Card ─────────────────────────────────────── */
-function ScheduleCardUI({ data }: { data: AIResponseData }) {
-    const events = data.events || [];
-    const colors = ["#7c3aed", "#06b6d4", "#f59e0b", "#10b981"];
+/* ══════════════════════════════════════════════════════════
+   VOGUE / CYBER-MINIMAL CARD COMPONENTS
+   No borders. Extreme glassmorphism. Oversized type.
+   ══════════════════════════════════════════════════════════ */
 
+/* ── Schedule ──────────────────────────────────────────── */
+function FloatingSchedule({ data }: { data: AIResponseData }) {
+    const events = data.events || [];
     return (
-        <div
-            className="relative overflow-hidden rounded-2xl border p-5"
-            style={{
-                background: "rgba(255,255,255,0.03)",
-                borderColor: "rgba(255,255,255,0.08)",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 4px 32px rgba(124,58,237,0.06), 0 1px 4px rgba(0,0,0,0.2)",
-            }}
-        >
-            <div
-                className="absolute inset-x-0 top-0 h-[1px]"
-                style={{ background: "linear-gradient(90deg, transparent, rgba(124,58,237,0.5), transparent)" }}
-            />
-            <div className="mb-4 flex items-center gap-2">
-                <Calendar size={14} className="text-violet-400" />
-                <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
-                    {data.title || "Schedule"}
+        <>
+            <div className="mb-1 flex items-end gap-3">
+                <Calendar size={11} className="mb-1" style={{ color: "var(--vibe-primary)" }} />
+                <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "var(--vibe-text-muted)" }}>
+                    Schedule
                 </span>
             </div>
-            {data.description && (
-                <p className="mb-4 text-sm leading-relaxed text-white/50">{data.description}</p>
-            )}
+            <h3 className="text-3xl font-extralight tracking-tight leading-none mb-4 sm:text-4xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
             <div className="space-y-3">
-                {events.map((event, i) => (
-                    <div key={i} className="flex items-start gap-3">
-                        <div className="flex w-16 shrink-0 items-center gap-1.5">
-                            <Clock size={10} className="text-white/30" />
-                            <span className="text-xs tabular-nums text-white/50">{event.time}</span>
-                        </div>
-                        <div className="flex gap-2.5">
-                            <div className="mt-0.5 h-8 w-[2px] shrink-0 rounded-full" style={{ background: colors[i % colors.length] }} />
-                            <div>
-                                <p className="text-sm font-medium text-white/80">{event.title}</p>
-                                <div className="mt-0.5 flex items-center gap-1">
-                                    <MapPin size={9} className="text-white/25" />
-                                    <span className="text-[11px] text-white/30">{event.location}</span>
-                                </div>
-                            </div>
+                {events.slice(0, 3).map((e, i) => (
+                    <div key={i} className="flex items-baseline gap-3">
+                        <span className="text-[10px] tabular-nums w-14 shrink-0" style={{ color: "var(--vibe-text-muted)" }}>
+                            {e.time}
+                        </span>
+                        <div className="flex-1">
+                            <p className="text-sm font-light" style={{ color: "var(--vibe-text)" }}>{e.title}</p>
+                            <p className="text-[9px]" style={{ color: "var(--vibe-text-muted)" }}>{e.location}</p>
                         </div>
                     </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 }
 
-/* ── Approval Card ─────────────────────────────────────── */
-function ApprovalCardUI({ data }: { data: AIResponseData }) {
-    return (
-        <div
-            className="overflow-hidden rounded-2xl border p-5"
-            style={{
-                background: "linear-gradient(135deg, rgba(124,58,237,0.06), rgba(6,182,212,0.04))",
-                borderColor: "rgba(124,58,237,0.15)",
-                boxShadow: "0 4px 32px rgba(124,58,237,0.08), inset 0 1px 0 rgba(255,255,255,0.04)",
-            }}
-        >
-            <div className="mb-3 flex items-center gap-2">
-                <div className="flex h-6 w-6 items-center justify-center rounded-lg" style={{ background: "rgba(124,58,237,0.2)" }}>
-                    <Sparkles size={12} className="text-violet-400" />
-                </div>
-                <span className="text-xs font-medium uppercase tracking-[0.15em] text-violet-400/70">Requires Approval</span>
-            </div>
-            <p className="mb-1 text-sm font-medium text-white/80">{data.title}</p>
-            <p className="mb-1 text-xs text-white/40">{data.description}</p>
-            {data.action && <p className="mb-4 text-xs italic text-white/25">Action: {data.action}</p>}
-            <div className="flex justify-center">
-                <SlideToApprove onApprove={() => console.log(`Approved: ${data.title}`)} />
-            </div>
-        </div>
-    );
-}
+/* ── Approval (sync-rate gated) ─────────────────────────── */
+function FloatingApproval({ data }: { data: AIResponseData }) {
+    const syncRate = usePetStore((s) => s.syncRate);
 
-/* ── Weather Vibe Card ─────────────────────────────────── */
-function WeatherVibeUI({ data }: { data: AIResponseData }) {
-    return (
-        <div
-            className="overflow-hidden rounded-2xl border p-5"
-            style={{
-                background: "linear-gradient(135deg, rgba(6,182,212,0.06), rgba(124,58,237,0.04))",
-                borderColor: "rgba(6,182,212,0.12)",
-                boxShadow: "0 4px 32px rgba(6,182,212,0.06), 0 1px 4px rgba(0,0,0,0.2)",
-            }}
-        >
-            <div className="mb-4 flex items-center gap-2">
-                <Cloud size={14} className="text-cyan-400" />
-                <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">{data.title}</span>
-            </div>
-            <div className="mb-3 flex items-center gap-4">
-                {data.temperature && (
-                    <div className="flex items-center gap-1.5">
-                        <Thermometer size={16} className="text-cyan-400/60" />
-                        <span className="text-2xl font-light tabular-nums text-white/80">{data.temperature}</span>
-                    </div>
-                )}
-                {data.condition && <span className="text-sm text-white/40">{data.condition}</span>}
-            </div>
-            <p className="text-sm leading-relaxed text-white/50">{data.description}</p>
-        </div>
-    );
-}
-
-/* ── Text Message Card ─────────────────────────────────── */
-function TextMessageUI({ data }: { data: AIResponseData }) {
-    return (
-        <div
-            className="overflow-hidden rounded-2xl border p-5"
-            style={{
-                background: "rgba(255,255,255,0.025)",
-                borderColor: "rgba(255,255,255,0.06)",
-                boxShadow: "0 2px 16px rgba(0,0,0,0.2)",
-            }}
-        >
-            <div className="mb-3 flex items-center gap-2">
-                <MessageSquare size={14} className="text-violet-400/60" />
-                <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">{data.title}</span>
-            </div>
-            <p className="text-sm leading-relaxed text-white/70">{data.message || data.description}</p>
-        </div>
-    );
-}
-
-/* ══════════════════════════════════════════════════════════
-   NEW UI TYPES
-   ══════════════════════════════════════════════════════════ */
-
-/* ── Chart Card ────────────────────────────────────────── */
-function ChartCardUI({ data }: { data: AIResponseData }) {
-    const chartData = data.chartData || [];
-    const maxValue = Math.max(...chartData.map((d) => d.value), 1);
-    const defaultColors = ["#7c3aed", "#06b6d4", "#f59e0b", "#10b981", "#ec4899", "#8b5cf6"];
-    const isLine = data.chartType === "line";
-
-    // Build SVG line path
-    const linePoints = chartData.map((d, i) => {
-        const x = (i / Math.max(chartData.length - 1, 1)) * 100;
-        const y = 100 - (d.value / maxValue) * 80 - 10;
-        return `${x},${y}`;
-    });
-    const linePath = linePoints.join(" ");
-
-    return (
-        <div
-            className="relative overflow-hidden rounded-2xl border p-5"
-            style={{
-                background: "rgba(255,255,255,0.03)",
-                borderColor: "rgba(255,255,255,0.08)",
-                backdropFilter: "blur(12px)",
-                boxShadow: "0 4px 32px rgba(124,58,237,0.06), 0 1px 4px rgba(0,0,0,0.2)",
-            }}
-        >
-            <div
-                className="absolute inset-x-0 top-0 h-[1px]"
-                style={{ background: "linear-gradient(90deg, transparent, rgba(6,182,212,0.5), transparent)" }}
-            />
-
-            <div className="mb-1 flex items-center justify-between">
-                <div className="flex items-center gap-2">
-                    <BarChart3 size={14} className="text-cyan-400" />
-                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
-                        {data.title || "Chart"}
+    /* ── syncRate >= 80 → absolute trust → auto-executed ── */
+    if (syncRate >= 80) {
+        return (
+            <>
+                <div className="mb-1 flex items-center gap-2">
+                    <CheckCircle size={10} className="text-emerald-400/60" />
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-emerald-400/40">
+                        Auto-Executed
                     </span>
                 </div>
-                {data.unit && (
-                    <span className="text-[10px] text-white/25">{data.unit}</span>
-                )}
-            </div>
+                <h3 className="text-3xl font-extralight tracking-tight leading-none mb-2 sm:text-4xl" style={{ color: "var(--vibe-text)" }}>
+                    {data.title}
+                </h3>
+                <p className="text-xs font-light mb-3 leading-relaxed" style={{ color: "var(--vibe-text-muted)" }}>
+                    {data.description}
+                </p>
+                <div
+                    className="flex items-center gap-2 rounded-lg px-3 py-2 w-fit"
+                    style={{
+                        background: "rgba(16,185,129,0.06)",
+                        border: "1px solid rgba(16,185,129,0.12)",
+                    }}
+                >
+                    <CheckCircle size={12} className="text-emerald-400/70" />
+                    <span className="text-[10px] uppercase tracking-[0.15em] text-emerald-400/60">
+                        Executed · Trusted
+                    </span>
+                </div>
+            </>
+        );
+    }
 
-            {data.description && (
-                <p className="mb-4 text-xs leading-relaxed text-white/40">{data.description}</p>
-            )}
+    /* ── syncRate < 50 → low trust → forced slide-to-approve ── */
+    if (syncRate < 50) {
+        return (
+            <>
+                <div className="mb-1 flex items-center gap-2">
+                    <Sparkles size={10} className="text-amber-400/50" />
+                    <span className="text-[9px] uppercase tracking-[0.2em] text-amber-400/40">
+                        Requires Approval
+                    </span>
+                </div>
+                <h3 className="text-3xl font-extralight tracking-tight leading-none mb-2 sm:text-4xl" style={{ color: "var(--vibe-text)" }}>
+                    {data.title}
+                </h3>
+                <p className="text-xs font-light mb-4 leading-relaxed" style={{ color: "var(--vibe-text-muted)" }}>
+                    {data.description}
+                </p>
+                <div className="scale-90 origin-left">
+                    <SlideToApprove
+                        onApprove={() => console.log(`Approved: ${data.title}`)}
+                    />
+                </div>
+            </>
+        );
+    }
+
+    /* ── 50 ≤ syncRate < 80 → moderate trust → normal approval ── */
+    return (
+        <>
+            <div className="mb-1 flex items-center gap-2">
+                <Sparkles size={10} style={{ color: "var(--vibe-primary)" }} />
+                <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "var(--vibe-text-muted)" }}>
+                    Approval
+                </span>
+            </div>
+            <h3 className="text-3xl font-extralight tracking-tight leading-none mb-2 sm:text-4xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
+            <p className="text-xs font-light mb-4 leading-relaxed" style={{ color: "var(--vibe-text-muted)" }}>
+                {data.description}
+            </p>
+            <div className="scale-90 origin-left">
+                <SlideToApprove
+                    onApprove={() => console.log(`Approved: ${data.title}`)}
+                />
+            </div>
+        </>
+    );
+}
+
+/* ── Weather Vibe ──────────────────────────────────────── */
+function FloatingWeather({ data }: { data: AIResponseData }) {
+    return (
+        <>
+            <div className="mb-1">
+                <Cloud size={11} style={{ color: "var(--vibe-primary)" }} />
+            </div>
+            <div className="flex items-end gap-3 mb-2">
+                <span className="text-5xl font-thin tabular-nums leading-none sm:text-6xl" style={{ color: "var(--vibe-text)" }}>
+                    {data.temperature}
+                </span>
+                <span className="text-[10px] mb-1" style={{ color: "var(--vibe-text-muted)" }}>{data.condition}</span>
+            </div>
+            <p className="text-xs font-light leading-relaxed max-w-[200px]" style={{ color: "var(--vibe-text-muted)" }}>
+                {data.description}
+            </p>
+        </>
+    );
+}
+
+/* ── Text Message ──────────────────────────────────────── */
+function FloatingText({ data }: { data: AIResponseData }) {
+    return (
+        <>
+            <div className="mb-2">
+                <MessageSquare size={10} style={{ color: "var(--vibe-text-muted)" }} />
+            </div>
+            <h3 className="text-2xl font-extralight tracking-tight leading-tight mb-3 sm:text-3xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
+            <p className="text-xs font-light leading-relaxed" style={{ color: "var(--vibe-text-muted)" }}>
+                {data.message || data.description}
+            </p>
+        </>
+    );
+}
+
+/* ── Chart ─────────────────────────────────────────────── */
+function FloatingChart({ data }: { data: AIResponseData }) {
+    const chartData = data.chartData || [];
+    const maxVal = Math.max(...chartData.map((d) => d.value), 1);
+    const isLine = data.chartType === "line";
+    const defaultColors = ["#7c3aed", "#06b6d4", "#f59e0b", "#10b981", "#ec4899"];
+
+    return (
+        <>
+            <div className="mb-1 flex items-center gap-2">
+                <BarChart3 size={10} style={{ color: "var(--vibe-primary)" }} />
+                <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "var(--vibe-text-muted)" }}>
+                    {data.unit || "Data"}
+                </span>
+            </div>
+            <h3 className="text-3xl font-extralight tracking-tight leading-none mb-4 sm:text-4xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
 
             {isLine ? (
-                /* ── Line Chart ─────────────────────────────────── */
-                <div className="relative h-36">
-                    <svg viewBox="0 0 100 100" preserveAspectRatio="none" className="h-full w-full">
-                        {/* Grid lines */}
-                        {[0.25, 0.5, 0.75].map((r) => (
-                            <line key={r} x1="0" y1={`${100 - r * 80 - 10}`} x2="100" y2={`${100 - r * 80 - 10}`}
-                                stroke="rgba(255,255,255,0.04)" strokeWidth="0.3" />
-                        ))}
-                        {/* Area fill */}
-                        <polygon
-                            points={`0,100 ${linePath} 100,100`}
-                            fill="url(#chartGradient)"
-                            opacity="0.3"
-                        />
-                        {/* Line */}
-                        <polyline
-                            points={linePath}
-                            fill="none"
-                            stroke="#06b6d4"
-                            strokeWidth="1.5"
-                            strokeLinecap="round"
-                            strokeLinejoin="round"
-                        />
-                        {/* Dots */}
-                        {chartData.map((d, i) => {
-                            const x = (i / Math.max(chartData.length - 1, 1)) * 100;
-                            const y = 100 - (d.value / maxValue) * 80 - 10;
-                            return (
-                                <circle key={i} cx={x} cy={y} r="2" fill={d.color || "#06b6d4"}
-                                    stroke="rgba(0,0,0,0.3)" strokeWidth="0.5" />
-                            );
-                        })}
+                <div className="h-20">
+                    <svg
+                        viewBox="0 0 100 50"
+                        preserveAspectRatio="none"
+                        className="h-full w-full"
+                    >
                         <defs>
-                            <linearGradient id="chartGradient" x1="0" y1="0" x2="0" y2="1">
-                                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.3" />
+                            <linearGradient id="areaFill" x1="0" y1="0" x2="0" y2="1">
+                                <stop offset="0%" stopColor="#06b6d4" stopOpacity="0.2" />
                                 <stop offset="100%" stopColor="#06b6d4" stopOpacity="0" />
                             </linearGradient>
                         </defs>
+                        {(() => {
+                            const pts = chartData.map((d, i) => {
+                                const x = (i / Math.max(chartData.length - 1, 1)) * 100;
+                                const y = 48 - (d.value / maxVal) * 40;
+                                return `${x},${y}`;
+                            });
+                            return (
+                                <>
+                                    <polygon
+                                        points={`0,50 ${pts.join(" ")} 100,50`}
+                                        fill="url(#areaFill)"
+                                    />
+                                    <polyline
+                                        points={pts.join(" ")}
+                                        fill="none"
+                                        stroke="#06b6d4"
+                                        strokeWidth="1.2"
+                                        strokeLinecap="round"
+                                    />
+                                </>
+                            );
+                        })()}
                     </svg>
-                    {/* X-axis labels */}
-                    <div className="mt-1 flex justify-between px-0.5">
-                        {chartData.map((d, i) => (
-                            <span key={i} className="text-[9px] text-white/25">{d.label}</span>
-                        ))}
-                    </div>
                 </div>
             ) : (
-                /* ── Bar Chart ──────────────────────────────────── */
-                <div className="space-y-2.5">
+                <div className="flex items-end gap-1 h-16">
                     {chartData.map((d, i) => {
-                        const pct = (d.value / maxValue) * 100;
-                        const color = d.color || defaultColors[i % defaultColors.length];
+                        const pct = (d.value / maxVal) * 100;
                         return (
-                            <div key={i}>
-                                <div className="mb-1 flex items-center justify-between">
-                                    <span className="text-xs text-white/60">{d.label}</span>
-                                    <span className="text-xs tabular-nums text-white/40">{d.value}{data.unit ? ` ${data.unit}` : ""}</span>
-                                </div>
-                                <div className="h-2 overflow-hidden rounded-full" style={{ background: "rgba(255,255,255,0.04)" }}>
-                                    <motion.div
-                                        className="h-full rounded-full"
-                                        style={{ background: `linear-gradient(90deg, ${color}, ${color}88)` }}
-                                        initial={{ width: 0 }}
-                                        animate={{ width: `${pct}%` }}
-                                        transition={{ duration: 0.8, delay: i * 0.1, ease: [0.22, 1, 0.36, 1] }}
-                                    />
-                                </div>
-                            </div>
+                            <motion.div
+                                key={i}
+                                className="flex-1 rounded-sm"
+                                style={{
+                                    background:
+                                        d.color || defaultColors[i % defaultColors.length],
+                                    opacity: 0.7,
+                                }}
+                                initial={{ height: 0 }}
+                                animate={{ height: `${pct}%` }}
+                                transition={{ delay: i * 0.06, duration: 0.6, ease: "backOut" }}
+                            />
                         );
                     })}
                 </div>
             )}
-        </div>
+        </>
     );
 }
 
-/* ── Data Table ────────────────────────────────────────── */
-function DataTableUI({ data }: { data: AIResponseData }) {
+/* ── Table ─────────────────────────────────────────────── */
+function FloatingTable({ data }: { data: AIResponseData }) {
     const columns = data.columns || [];
     const rows = data.rows || [];
 
     return (
-        <div
-            className="overflow-hidden rounded-2xl border"
-            style={{
-                background: "rgba(255,255,255,0.025)",
-                borderColor: "rgba(255,255,255,0.08)",
-                boxShadow: "0 4px 32px rgba(124,58,237,0.04), 0 1px 4px rgba(0,0,0,0.2)",
-            }}
-        >
-            {/* Header */}
-            <div className="border-b px-5 pt-4 pb-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center gap-2">
-                    <Table2 size={14} className="text-violet-400" />
-                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
-                        {data.title || "Data"}
-                    </span>
-                </div>
-                {data.description && (
-                    <p className="mt-1 text-xs text-white/30">{data.description}</p>
-                )}
+        <>
+            <div className="mb-1 flex items-center gap-2">
+                <Table2 size={10} style={{ color: "var(--vibe-primary)" }} />
+                <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "var(--vibe-text-muted)" }}>
+                    Data
+                </span>
             </div>
+            <h3 className="text-2xl font-extralight tracking-tight leading-none mb-3 sm:text-3xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
 
-            {/* Table */}
-            <div className="overflow-x-auto">
+            <div className="overflow-hidden -mx-1">
                 <table className="w-full">
                     <thead>
-                        <tr style={{ borderBottom: "1px solid rgba(255,255,255,0.06)" }}>
-                            {columns.map((col, i) => (
+                        <tr>
+                            {columns.map((c, i) => (
                                 <th
                                     key={i}
-                                    className="px-5 py-2.5 text-left text-[10px] font-medium uppercase tracking-[0.15em] text-white/30"
+                                    className="px-1 pb-1.5 text-left text-[8px] uppercase tracking-[0.15em] font-normal"
+                                    style={{ color: "var(--vibe-text-muted)" }}
                                 >
-                                    {col}
+                                    {c}
                                 </th>
                             ))}
                         </tr>
                     </thead>
                     <tbody>
-                        {rows.map((row, ri) => (
-                            <motion.tr
-                                key={ri}
-                                initial={{ opacity: 0 }}
-                                animate={{ opacity: 1 }}
-                                transition={{ delay: ri * 0.06 }}
-                                className="group transition-colors"
-                                style={{
-                                    borderBottom: ri < rows.length - 1 ? "1px solid rgba(255,255,255,0.03)" : "none",
-                                }}
-                                onMouseEnter={(e) => {
-                                    (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.04)";
-                                }}
-                                onMouseLeave={(e) => {
-                                    (e.currentTarget as HTMLElement).style.background = "transparent";
-                                }}
-                            >
+                        {rows.slice(0, 4).map((row, ri) => (
+                            <tr key={ri}>
                                 {row.map((cell, ci) => {
-                                    // Detect trend indicators
-                                    const isPositive = cell.startsWith("+") || cell.startsWith("↑");
-                                    const isNegative = cell.startsWith("-") || cell.startsWith("↓");
-
+                                    const pos = cell.startsWith("+") || cell.startsWith("↑");
+                                    const neg = cell.startsWith("-") || cell.startsWith("↓");
                                     return (
-                                        <td key={ci} className="px-5 py-2.5">
+                                        <td key={ci} className="px-1 py-1">
                                             <span
-                                                className="flex items-center gap-1 text-xs"
+                                                className="flex items-center gap-0.5 text-[10px]"
                                                 style={{
-                                                    color: isPositive
-                                                        ? "rgba(34,197,94,0.8)"
-                                                        : isNegative
-                                                            ? "rgba(239,68,68,0.8)"
+                                                    color: pos
+                                                        ? "rgba(34,197,94,0.7)"
+                                                        : neg
+                                                            ? "rgba(239,68,68,0.7)"
                                                             : ci === 0
-                                                                ? "rgba(255,255,255,0.7)"
-                                                                : "rgba(255,255,255,0.45)",
+                                                                ? "var(--vibe-text)"
+                                                                : "var(--vibe-text-muted)",
                                                     fontVariantNumeric: "tabular-nums",
                                                 }}
                                             >
-                                                {isPositive && <TrendingUp size={10} />}
-                                                {isNegative && <TrendingDown size={10} />}
+                                                {pos && <TrendingUp size={8} />}
+                                                {neg && <TrendingDown size={8} />}
                                                 {cell}
                                             </span>
                                         </td>
                                     );
                                 })}
-                            </motion.tr>
+                            </tr>
                         ))}
                     </tbody>
                 </table>
             </div>
-        </div>
+        </>
     );
 }
 
-/* ── News Summary Card ─────────────────────────────────── */
-function NewsSummaryUI({ data }: { data: AIResponseData }) {
+/* ── News ──────────────────────────────────────────────── */
+function FloatingNews({ data }: { data: AIResponseData }) {
     const articles = data.articles || [];
-    const tagColors: Record<string, string> = {
+    const tagColor: Record<string, string> = {
         tech: "#7c3aed",
         finance: "#f59e0b",
         science: "#06b6d4",
@@ -416,240 +380,250 @@ function NewsSummaryUI({ data }: { data: AIResponseData }) {
     };
 
     return (
-        <div
-            className="overflow-hidden rounded-2xl border"
-            style={{
-                background: "rgba(255,255,255,0.025)",
-                borderColor: "rgba(255,255,255,0.06)",
-                boxShadow: "0 4px 32px rgba(124,58,237,0.04), 0 1px 4px rgba(0,0,0,0.2)",
-            }}
-        >
-            {/* Header */}
-            <div className="border-b px-5 pt-4 pb-3" style={{ borderColor: "rgba(255,255,255,0.06)" }}>
-                <div className="flex items-center gap-2">
-                    <Newspaper size={14} className="text-violet-400" />
-                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
-                        {data.title || "News Digest"}
-                    </span>
-                </div>
-                {data.description && (
-                    <p className="mt-1 text-xs text-white/30">{data.description}</p>
-                )}
+        <>
+            <div className="mb-1 flex items-center gap-2">
+                <Newspaper size={10} style={{ color: "var(--vibe-primary)" }} />
+                <span className="text-[9px] uppercase tracking-[0.2em]" style={{ color: "var(--vibe-text-muted)" }}>
+                    Digest
+                </span>
             </div>
-
-            {/* Articles */}
-            <div>
-                {articles.map((article, i) => (
-                    <motion.div
-                        key={i}
-                        initial={{ opacity: 0, x: -8 }}
-                        animate={{ opacity: 1, x: 0 }}
-                        transition={{ delay: i * 0.1, duration: 0.4 }}
-                        className="border-b px-5 py-4 transition-colors"
-                        style={{
-                            borderColor: i < articles.length - 1 ? "rgba(255,255,255,0.04)" : "transparent",
-                        }}
-                        onMouseEnter={(e) => {
-                            (e.currentTarget as HTMLElement).style.background = "rgba(124,58,237,0.03)";
-                        }}
-                        onMouseLeave={(e) => {
-                            (e.currentTarget as HTMLElement).style.background = "transparent";
-                        }}
-                    >
-                        <div className="mb-1.5 flex items-start justify-between gap-2">
-                            <h4 className="text-sm font-medium leading-snug text-white/80">
-                                {article.headline}
-                            </h4>
-                            {article.url && (
-                                <ExternalLink size={12} className="mt-0.5 shrink-0 text-white/20" />
-                            )}
-                        </div>
-
-                        <p className="mb-2 text-xs leading-relaxed text-white/40">
-                            {article.summary}
+            <h3 className="text-2xl font-extralight tracking-tight leading-none mb-4 sm:text-3xl" style={{ color: "var(--vibe-text)" }}>
+                {data.title}
+            </h3>
+            <div className="space-y-3">
+                {articles.slice(0, 3).map((a, i) => (
+                    <div key={i}>
+                        <p className="text-xs font-light leading-snug mb-0.5" style={{ color: "var(--vibe-text)" }}>
+                            {a.headline}
                         </p>
-
-                        <div className="flex items-center gap-2">
-                            {article.tag && (
+                        <div className="flex items-center gap-1.5">
+                            {a.tag && (
                                 <span
-                                    className="rounded-full px-2 py-0.5 text-[10px] font-medium uppercase tracking-wider"
-                                    style={{
-                                        background: `${tagColors[article.tag.toLowerCase()] || "#71717a"}15`,
-                                        color: tagColors[article.tag.toLowerCase()] || "#71717a",
-                                        border: `1px solid ${tagColors[article.tag.toLowerCase()] || "#71717a"}25`,
-                                    }}
+                                    className="text-[8px] uppercase tracking-wider"
+                                    style={{ color: tagColor[a.tag.toLowerCase()] || "#71717a" }}
                                 >
-                                    {article.tag}
+                                    {a.tag}
                                 </span>
                             )}
-                            <span className="text-[10px] text-white/20">{article.source}</span>
+                            <span className="text-[8px]" style={{ color: "var(--vibe-text-muted)" }}>{a.source}</span>
                         </div>
-                    </motion.div>
+                    </div>
                 ))}
             </div>
-        </div>
+        </>
     );
 }
 
-/* ── Icon map for compact mode ─────────────────────────── */
-const ICON_MAP: Record<string, typeof Calendar> = {
-    schedule_card: Calendar,
-    approval_card: Sparkles,
-    weather_vibe: Cloud,
-    text_message: MessageSquare,
-    chart_card: BarChart3,
-    data_table: Table2,
-    news_summary: Newspaper,
-};
+/* ══════════════════════════════════════════════════════════
+   ORBIT CARD — Floating, breathing, draggable shell
+   ══════════════════════════════════════════════════════════ */
+function OrbitCard({
+    response,
+    index,
+    onExpand,
+}: {
+    response: AIResponseUI;
+    index: number;
+    onExpand: () => void;
+}) {
+    /* Unique float parameters so cards breathe out of sync */
+    const float = useMemo(() => {
+        const seed = index * 1337;
+        return {
+            yRange: 10 + (seed % 12),             // 10–22px drift
+            duration: 4 + (seed % 5),              // 4–9s period
+            delay: (seed % 3000) / 1000,           // 0–3s offset
+            rotateRange: 0.5 + ((seed % 10) / 10), // 0.5–1.5° tilt
+        };
+    }, [index]);
 
-const ACCENT_MAP: Record<string, string> = {
-    schedule_card: "#7c3aed",
-    approval_card: "#a78bfa",
-    weather_vibe: "#06b6d4",
-    text_message: "#71717a",
-    chart_card: "#06b6d4",
-    data_table: "#7c3aed",
-    news_summary: "#7c3aed",
-};
-
-/* ── Compact preview for grid cells ────────────────────── */
-function CompactPreview({ response }: { response: AIResponseUI }) {
     const { uiType, data } = response;
-    const Icon = ICON_MAP[uiType] || MessageSquare;
-    const accent = ACCENT_MAP[uiType] || "#7c3aed";
 
-    // Build a short preview based on type
-    const preview = (() => {
+    const inner = (() => {
         switch (uiType) {
-            case "schedule_card": {
-                const events = data.events || [];
-                return events.slice(0, 2).map((e) => `${e.time} — ${e.title}`).join("\n");
-            }
-            case "chart_card": {
-                const chartData = data.chartData || [];
-                const max = chartData.reduce((m, d) => (d.value > m.value ? d : m), chartData[0]);
-                return max ? `Peak: ${max.label} (${max.value}${data.unit ? ` ${data.unit}` : ""})` : "";
-            }
-            case "data_table": {
-                const rows = data.rows || [];
-                return `${rows.length} rows · ${(data.columns || []).length} columns`;
-            }
-            case "news_summary": {
-                const articles = data.articles || [];
-                return articles.slice(0, 2).map((a) => a.headline).join("\n");
-            }
+            case "schedule_card":
+                return <FloatingSchedule data={data} />;
             case "approval_card":
-                return data.action || data.description || "";
+                return <FloatingApproval data={data} />;
             case "weather_vibe":
-                return `${data.temperature || ""} ${data.condition || ""}`.trim();
+                return <FloatingWeather data={data} />;
+            case "text_message":
+                return <FloatingText data={data} />;
+            case "chart_card":
+                return <FloatingChart data={data} />;
+            case "data_table":
+                return <FloatingTable data={data} />;
+            case "news_summary":
+                return <FloatingNews data={data} />;
             default:
-                return data.message || data.description || "";
+                return <FloatingText data={data} />;
         }
     })();
 
+    /* Drag hint: subtle glow on drag */
+    const x = useMotionValue(0);
+    const y = useMotionValue(0);
+    const glowOpacity = useTransform(
+        [x, y],
+        ([latestX, latestY]: number[]) =>
+            Math.min(0.15, (Math.abs(latestX) + Math.abs(latestY)) / 800)
+    );
+
     return (
-        <div className="flex h-full flex-col justify-between p-4">
-            {/* Header */}
-            <div>
-                <div className="mb-2 flex items-center gap-2">
-                    <div
-                        className="flex h-6 w-6 shrink-0 items-center justify-center rounded-lg"
-                        style={{ background: `${accent}18` }}
-                    >
-                        <Icon size={12} style={{ color: accent }} />
-                    </div>
-                    <span className="text-[10px] font-medium uppercase tracking-[0.12em] text-white/35 truncate">
-                        {data.title || uiType.replace("_", " ")}
+        <motion.div
+            drag
+            dragConstraints={{ top: -200, bottom: 200, left: -200, right: 200 }}
+            dragElastic={0.2}
+            dragMomentum
+            dragTransition={{ bounceStiffness: 200, bounceDamping: 20 }}
+            style={{ x, y }}
+            /* Breathing float animation */
+            animate={{
+                translateY: [0, -float.yRange, 0],
+                rotate: [0, float.rotateRange, 0, -float.rotateRange, 0],
+            }}
+            transition={{
+                translateY: {
+                    duration: float.duration,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: float.delay,
+                },
+                rotate: {
+                    duration: float.duration * 1.5,
+                    repeat: Infinity,
+                    ease: "easeInOut",
+                    delay: float.delay,
+                },
+            }}
+            /* Entrance */
+            initial={{ opacity: 0, scale: 0.8, filter: "blur(10px)" }}
+            whileInView={{ opacity: 1, scale: 1, filter: "blur(0px)" }}
+            viewport={{ once: true }}
+            /* Hover lift */
+            whileHover={{
+                scale: 1.03,
+                transition: { duration: 0.3, ease: "easeOut" },
+            }}
+            whileTap={{ scale: 0.97 }}
+            onDoubleClick={onExpand}
+            className="cursor-grab active:cursor-grabbing select-none touch-none"
+        >
+            <motion.div
+                className="relative px-5 py-5 sm:px-6 sm:py-6 vibe-transition"
+                style={{
+                    background: "var(--vibe-surface)",
+                    border: `var(--vibe-border-w) solid var(--vibe-surface-border)`,
+                    borderRadius: "var(--vibe-radius-lg)",
+                    backdropFilter: `blur(var(--vibe-blur))`,
+                    WebkitBackdropFilter: `blur(var(--vibe-blur))`,
+                    boxShadow: `
+            0 8px 40px rgba(0,0,0,0.3),
+            0 0 80px var(--vibe-glow)
+          `,
+                }}
+            >
+                {/* Top edge accent */}
+                <div
+                    className="absolute inset-x-0 top-0 h-[0.5px]"
+                    style={{
+                        borderRadius: "var(--vibe-radius-lg)",
+                        background:
+                            `linear-gradient(90deg, transparent 10%, var(--vibe-primary) 50%, transparent 90%)`,
+                        opacity: 0.25,
+                    }}
+                />
+
+                {inner}
+
+                {/* Expand hint */}
+                <div className="absolute bottom-2 right-3">
+                    <span className="text-[8px] uppercase tracking-wider" style={{ color: "var(--vibe-text-muted)" }}>
+                        double-tap
                     </span>
                 </div>
-
-                {/* Description */}
-                {data.description && (
-                    <p className="text-xs leading-relaxed text-white/50 line-clamp-2 mb-2">
-                        {data.description}
-                    </p>
-                )}
-            </div>
-
-            {/* Preview content */}
-            <div className="mt-auto">
-                {uiType === "chart_card" && data.chartData ? (
-                    /* Mini bar sparkline */
-                    <div className="flex items-end gap-[3px] h-8">
-                        {(data.chartData || []).map((d, i) => {
-                            const max = Math.max(...(data.chartData || []).map((x) => x.value), 1);
-                            const pct = (d.value / max) * 100;
-                            return (
-                                <motion.div
-                                    key={i}
-                                    className="flex-1 rounded-sm"
-                                    style={{ background: d.color || accent }}
-                                    initial={{ height: 0 }}
-                                    animate={{ height: `${pct}%` }}
-                                    transition={{ delay: i * 0.05, duration: 0.4 }}
-                                />
-                            );
-                        })}
-                    </div>
-                ) : (
-                    <p className="text-[11px] leading-relaxed text-white/30 line-clamp-2 whitespace-pre-line">
-                        {preview}
-                    </p>
-                )}
-            </div>
-
-            {/* Expand hint */}
-            <div className="mt-2 flex justify-end">
-                <span className="text-[9px] uppercase tracking-wider text-white/15">
-                    tap to expand
-                </span>
-            </div>
-        </div>
+            </motion.div>
+        </motion.div>
     );
 }
 
-/* ── Main Renderer ─────────────────────────────────────── */
-export function GenerativeUIRenderer({
+/* ══════════════════════════════════════════════════════════
+   EXPANDED OVERLAY — Full detail view
+   ══════════════════════════════════════════════════════════ */
+function ExpandedOverlay({
     response,
-    compact = false,
+    onClose,
 }: {
     response: AIResponseUI;
-    compact?: boolean;
+    onClose: () => void;
 }) {
-    if (compact) {
-        return <CompactPreview response={response} />;
-    }
-
     const { uiType, data } = response;
 
-    const content = (() => {
+    const inner = (() => {
         switch (uiType) {
             case "schedule_card":
-                return <ScheduleCardUI data={data} />;
+                return <FloatingSchedule data={data} />;
             case "approval_card":
-                return <ApprovalCardUI data={data} />;
+                return <FloatingApproval data={data} />;
             case "weather_vibe":
-                return <WeatherVibeUI data={data} />;
+                return <FloatingWeather data={data} />;
             case "text_message":
-                return <TextMessageUI data={data} />;
+                return <FloatingText data={data} />;
             case "chart_card":
-                return <ChartCardUI data={data} />;
+                return <FloatingChart data={data} />;
             case "data_table":
-                return <DataTableUI data={data} />;
+                return <FloatingTable data={data} />;
             case "news_summary":
-                return <NewsSummaryUI data={data} />;
+                return <FloatingNews data={data} />;
             default:
-                return <TextMessageUI data={data} />;
+                return <FloatingText data={data} />;
         }
     })();
 
     return (
         <motion.div
-            initial={{ opacity: 0, y: 16, scale: 0.97 }}
-            animate={{ opacity: 1, y: 0, scale: 1 }}
-            transition={{ duration: 0.5, ease: [0.22, 1, 0.36, 1] }}
+            key="expanded-overlay"
+            initial={{ opacity: 0 }}
+            animate={{ opacity: 1 }}
+            exit={{ opacity: 0 }}
+            transition={{ duration: 0.3 }}
+            className="fixed inset-0 z-[200] flex items-center justify-center p-8"
+            style={{ background: "rgba(0,0,0,0.6)", backdropFilter: "blur(12px)" }}
+            onClick={onClose}
         >
-            {content}
+            <motion.div
+                initial={{ scale: 0.85, y: 30, filter: "blur(8px)" }}
+                animate={{ scale: 1, y: 0, filter: "blur(0px)" }}
+                exit={{ scale: 0.85, y: 30, filter: "blur(8px)" }}
+                transition={{ type: "spring", stiffness: 300, damping: 28 }}
+                className="relative max-w-md w-full px-8 py-8 sm:px-10 sm:py-10 max-h-[80vh] overflow-y-auto vibe-transition"
+                style={{
+                    background: "var(--vibe-bg)",
+                    borderRadius: "var(--vibe-radius-lg)",
+                    border: `var(--vibe-border-w) solid var(--vibe-surface-border)`,
+                    backdropFilter: `blur(var(--vibe-blur-heavy))`,
+                    boxShadow:
+                        `0 32px 100px rgba(0,0,0,0.6), 0 0 60px var(--vibe-glow)`,
+                }}
+                onClick={(e) => e.stopPropagation()}
+            >
+                {/* Close */}
+                <button
+                    onClick={onClose}
+                    className="absolute right-4 top-4 text-[9px] uppercase tracking-wider transition-colors"
+                    style={{ color: "var(--vibe-text-muted)" }}
+                >
+                    Close
+                </button>
+
+                {inner}
+            </motion.div>
         </motion.div>
     );
 }
+
+/* ══════════════════════════════════════════════════════════
+   PUBLIC EXPORTS
+   ══════════════════════════════════════════════════════════ */
+export { OrbitCard, ExpandedOverlay };
+export type { AIResponseUI, Mood };

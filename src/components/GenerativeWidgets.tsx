@@ -20,8 +20,8 @@ function WidgetCard({
             transition={{ duration: 0.6, delay, ease: [0.22, 1, 0.36, 1] }}
             className="group relative overflow-hidden rounded-2xl border p-5"
             style={{
-                background: "rgba(255,255,255,0.03)",
-                borderColor: "rgba(255,255,255,0.08)",
+                background: "var(--vibe-surface)",
+                borderColor: "var(--vibe-surface-border)",
                 backdropFilter: "blur(12px)",
             }}
         >
@@ -60,11 +60,11 @@ export function ScheduleWidget() {
             <div className="mb-4 flex items-center justify-between">
                 <div className="flex items-center gap-2">
                     <Calendar size={14} className="text-violet-400" />
-                    <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
+                    <span className="text-xs font-medium uppercase tracking-[0.15em]" style={{ color: "var(--vibe-text-muted)" }}>
                         Today&apos;s Schedule
                     </span>
                 </div>
-                <span className="text-xs text-white/25">Feb 23</span>
+                <span className="text-xs" style={{ color: "var(--vibe-text-muted)" }}>Feb 23</span>
             </div>
 
             {/* Events */}
@@ -73,8 +73,8 @@ export function ScheduleWidget() {
                     <div key={i} className="flex items-start gap-3">
                         {/* Time pill */}
                         <div className="flex w-16 shrink-0 items-center gap-1.5">
-                            <Clock size={10} className="text-white/30" />
-                            <span className="text-xs tabular-nums text-white/50">
+                            <Clock size={10} style={{ color: "var(--vibe-text-muted)" }} />
+                            <span className="text-xs tabular-nums" style={{ color: "var(--vibe-text-muted)" }}>
                                 {event.time}
                             </span>
                         </div>
@@ -86,12 +86,12 @@ export function ScheduleWidget() {
                                 style={{ background: event.color }}
                             />
                             <div>
-                                <p className="text-sm font-medium text-white/80">
+                                <p className="text-sm font-medium" style={{ color: "var(--vibe-text)" }}>
                                     {event.title}
                                 </p>
                                 <div className="mt-0.5 flex items-center gap-1">
-                                    <MapPin size={9} className="text-white/25" />
-                                    <span className="text-[11px] text-white/30">
+                                    <MapPin size={9} style={{ color: "var(--vibe-text-muted)" }} />
+                                    <span className="text-[11px]" style={{ color: "var(--vibe-text-muted)" }}>
                                         {event.location}
                                     </span>
                                 </div>
@@ -111,7 +111,7 @@ export function MusicWidget() {
             {/* Header */}
             <div className="mb-4 flex items-center gap-2">
                 <Music size={14} className="text-cyan-400" />
-                <span className="text-xs font-medium uppercase tracking-[0.15em] text-white/40">
+                <span className="text-xs font-medium uppercase tracking-[0.15em]" style={{ color: "var(--vibe-text-muted)" }}>
                     Curated for You
                 </span>
             </div>
@@ -124,18 +124,18 @@ export function MusicWidget() {
                     style={{
                         background:
                             "linear-gradient(135deg, rgba(124,58,237,0.3), rgba(6,182,212,0.3))",
-                        border: "1px solid rgba(255,255,255,0.08)",
+                        border: "1px solid var(--vibe-surface-border)",
                     }}
                 >
-                    <Play size={18} className="ml-0.5 text-white/60" />
+                    <Play size={18} className="ml-0.5" style={{ color: "var(--vibe-text)" }} />
                 </div>
 
                 {/* Track info */}
                 <div className="min-w-0 flex-1">
-                    <p className="truncate text-sm font-medium text-white/80">
+                    <p className="truncate text-sm font-medium" style={{ color: "var(--vibe-text)" }}>
                         Midnight Protocol
                     </p>
-                    <p className="mt-0.5 text-xs text-white/35">
+                    <p className="mt-0.5 text-xs" style={{ color: "var(--vibe-text-muted)" }}>
                         Synthwave Collective
                     </p>
 
@@ -151,8 +151,8 @@ export function MusicWidget() {
                                     style={{
                                         height: `${h}px`,
                                         background: played
-                                            ? "rgba(6,182,212,0.6)"
-                                            : "rgba(255,255,255,0.1)",
+                                            ? "var(--vibe-primary)"
+                                            : "var(--vibe-surface-border)",
                                     }}
                                 />
                             );
@@ -161,7 +161,7 @@ export function MusicWidget() {
                 </div>
 
                 {/* Like button */}
-                <button className="shrink-0 rounded-full p-2 text-white/30 transition-colors hover:text-pink-400">
+                <button className="shrink-0 rounded-full p-2 transition-colors hover:text-pink-400" style={{ color: "var(--vibe-text-muted)" }}>
                     <Heart size={16} />
                 </button>
             </div>
