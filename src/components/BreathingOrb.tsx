@@ -71,26 +71,29 @@ const MOTIONS: Record<PetMood, MoodMotion> = {
 
 /* ══════════════════════════════════════════════════════════
    MORPHOLOGICAL EVOLUTION: STAGE 1 — PROTO-CORE (Levels 1-9)
-   极简、克制、像一颗在深海中呼吸的发光卵
+   A sleek, elegant glowing dot that breathes with pure light.
    ══════════════════════════════════════════════════════════ */
-function Stage1Proto({ handleClick, isLoading }: any) {
+export function Stage1Proto({ handleClick, isLoading }: any) {
     return (
-        <button onClick={handleClick} disabled={isLoading} className="flex items-center justify-center w-64 h-64 outline-none focus:outline-none">
+        <button onClick={handleClick} disabled={isLoading} className="relative flex items-center justify-center w-64 h-64 outline-none focus:outline-none group">
             <motion.div
-                animate={{
-                    scale: [1, 1.2, 1],
-                    opacity: [0.6, 1, 0.6]
-                }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="w-4 h-4 rounded-full"
+                animate={{ scale: [1, 1.3, 1], opacity: [0.8, 1, 0.8] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
+                className="w-5 h-5 rounded-full"
                 style={{
-                    backgroundColor: "var(--vibe-primary)",
+                    backgroundColor: "white",
                     boxShadow: `
-              0 0 10px var(--vibe-primary),
-              0 0 40px var(--vibe-primary-soft),
-              0 0 80px var(--vibe-primary-soft)
-            `
+                        0 0 10px white,
+                        0 0 30px var(--vibe-primary),
+                        0 0 80px var(--vibe-primary-soft)
+                    `,
                 }}
+            />
+            {/* Soft ambient ring */}
+            <motion.div
+                animate={{ scale: [1, 1.5, 1], opacity: [0.1, 0.3, 0.1] }}
+                transition={{ duration: 3, repeat: Infinity, ease: "easeInOut", delay: 0.5 }}
+                className="absolute w-12 h-12 rounded-full border border-[var(--vibe-primary-soft)]"
             />
         </button>
     );
@@ -98,100 +101,156 @@ function Stage1Proto({ handleClick, isLoading }: any) {
 
 /* ══════════════════════════════════════════════════════════
    MORPHOLOGICAL EVOLUTION: STAGE 2 — LIQUID MATRIX (Levels 10-29)
-   真正的无规则流体动画，使用 8 点 border-radius 变换
+   A deep, refracting liquid orb with internal highlights.
    ══════════════════════════════════════════════════════════ */
-function Stage2Liquid({ handleClick, isLoading }: any) {
+export function Stage2Liquid({ handleClick, isLoading }: any) {
     return (
-        <button onClick={handleClick} disabled={isLoading} className="flex items-center justify-center w-64 h-64 outline-none focus:outline-none">
+        <button onClick={handleClick} disabled={isLoading} className="relative flex items-center justify-center w-64 h-64 outline-none focus:outline-none group">
+            {/* Outer Ambient Glow */}
+            <motion.div
+                animate={{ scale: [1, 1.1, 1], opacity: [0.4, 0.6, 0.4] }}
+                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute w-48 h-48 rounded-full blur-2xl pointer-events-none"
+                style={{ background: "radial-gradient(circle, var(--vibe-glow) 0%, transparent 70%)" }}
+            />
+
+            {/* The Liquid Core */}
             <motion.div
                 animate={{
                     borderRadius: [
+                        "40% 60% 70% 30% / 40% 50% 60% 50%",
                         "60% 40% 30% 70% / 60% 30% 70% 40%",
-                        "30% 70% 70% 30% / 30% 30% 70% 70%",
-                        "60% 40% 30% 70% / 60% 30% 70% 40%"
+                        "50% 50% 60% 40% / 40% 60% 50% 60%",
+                        "40% 60% 70% 30% / 40% 50% 60% 50%"
                     ],
-                    rotate: [0, 360]
+                    rotate: 360
                 }}
-                transition={{
-                    duration: 12,
-                    repeat: Infinity,
-                    ease: "linear"
-                }}
-                className="w-32 h-32 relative flex items-center justify-center border border-white/20"
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                className="w-32 h-32 relative flex items-center justify-center overflow-hidden border border-white/20"
                 style={{
-                    background: "linear-gradient(135deg, var(--vibe-primary-soft) 0%, transparent 100%)",
-                    backdropFilter: "blur(var(--vibe-blur))",
+                    background: "linear-gradient(135deg, var(--vibe-primary-soft) 0%, rgba(0,0,0,0.4) 100%)",
+                    backdropFilter: "blur(12px)",
                     boxShadow: `
-              inset 0 0 20px rgba(255, 255, 255, 0.2),
-              0 0 30px var(--vibe-primary-soft)
-            `
+                        inset 0 0 30px rgba(255, 255, 255, 0.3),
+                        inset 20px 0 40px var(--vibe-primary),
+                        0 0 40px var(--vibe-glow)
+                    `
                 }}
             >
-                {/* 内部的高亮核心 */}
+                {/* Inner Caustics / Highlight */}
                 <motion.div
-                    animate={{ scale: [0.9, 1.1, 0.9] }}
-                    transition={{ duration: 3, repeat: Infinity, ease: "easeInOut" }}
-                    className="w-12 h-12 rounded-full blur-md"
-                    style={{ backgroundColor: "var(--vibe-primary)" }}
+                    animate={{ x: [-10, 10, -10], y: [-15, 15, -15], scale: [1, 1.2, 1] }}
+                    transition={{ duration: 5, repeat: Infinity, ease: "easeInOut" }}
+                    className="absolute top-2 left-2 w-16 h-16 rounded-full blur-md"
+                    style={{ background: "radial-gradient(circle, rgba(255,255,255,0.8) 0%, transparent 60%)" }}
                 />
             </motion.div>
+
+            {/* Orbiting fragments */}
+            <motion.div
+                animate={{ rotate: -360 }}
+                transition={{ duration: 8, repeat: Infinity, ease: "linear" }}
+                className="absolute w-40 h-40 rounded-full border border-dashed border-white/10"
+            />
         </button>
     );
 }
 
 /* ══════════════════════════════════════════════════════════
    MORPHOLOGICAL EVOLUTION: STAGE 3 — HYPERCUBE (Levels 30+)
-   终极炫耀形态！包含 3D 旋转的玻璃星环和极致发光的奇点
+   The 'Celestial Astrolabe' - God-Tier multi-axis 3D geometry.
    ══════════════════════════════════════════════════════════ */
-function Stage3Hypercube({ handleClick, isLoading }: any) {
+export function Stage3Hypercube({ handleClick, isLoading }: any) {
     return (
         <button
             onClick={handleClick}
             disabled={isLoading}
-            className="relative flex items-center justify-center w-64 h-64 outline-none focus:outline-none"
-            style={{ perspective: "1000px" }} // 必须开启 3D 空间透视
+            className="relative flex items-center justify-center w-80 h-80 outline-none focus:outline-none group hover:scale-110 transition-transform duration-700"
+            style={{ perspective: "1200px", transformStyle: "preserve-3d" }}
         >
-            {/* 中心燃烧的奇点 */}
+            {/* Deep Nebula Glow */}
             <motion.div
-                animate={{ scale: [0.8, 1.2, 0.8] }}
-                transition={{ duration: 4, repeat: Infinity, ease: "easeInOut" }}
-                className="absolute z-10 w-12 h-12 rounded-full"
-                style={{
-                    backgroundColor: "var(--vibe-primary)",
-                    boxShadow: `0 0 60px var(--vibe-primary), 0 0 120px var(--vibe-primary)`
-                }}
+                animate={{ scale: [1, 1.2, 1], opacity: [0.5, 0.8, 0.5] }}
+                transition={{ duration: 8, repeat: Infinity, ease: "easeInOut" }}
+                className="absolute w-64 h-64 rounded-full blur-3xl pointer-events-none"
+                style={{ background: "radial-gradient(circle, var(--vibe-primary-soft) 0%, var(--vibe-glow) 40%, transparent 80%)" }}
             />
 
-            {/* 外层主星环 (3D 翻转) */}
+            {/* --- Astrolabe Ring 1 (Z-Axis Flat Orbit) --- */}
             <motion.div
-                animate={{
-                    rotateX: [0, 360],
-                    rotateY: [0, 180],
-                    rotateZ: [0, 360]
+                animate={{ rotateZ: 360 }}
+                transition={{ duration: 25, repeat: Infinity, ease: "linear" }}
+                className="absolute w-56 h-56 rounded-full border-[1px]"
+                style={{
+                    borderColor: "rgba(255,255,255,0.08)",
+                    borderTopColor: "var(--vibe-primary)",
+                    borderBottomColor: "white",
+                    boxShadow: "0 0 15px var(--vibe-glow), inset 0 0 15px var(--vibe-glow)",
+                    transformStyle: "preserve-3d"
                 }}
-                transition={{ duration: 20, repeat: Infinity, ease: "linear" }}
-                className="absolute w-48 h-48 rounded-full border-[1px]"
+            >
+                {/* Orbital Node */}
+                <div className="absolute top-0 left-1/2 -translate-x-1/2 -translate-y-1/2 w-2 h-2 bg-white rounded-full shadow-[0_0_10px_white]" />
+            </motion.div>
+
+            {/* --- Astrolabe Ring 2 (Y-Axis Vertical Spin) --- */}
+            <motion.div
+                animate={{ rotateY: 360, rotateZ: 45 }}
+                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
+                className="absolute w-44 h-44 rounded-full border-[2px]"
                 style={{
                     borderColor: "rgba(255,255,255,0.1)",
-                    borderLeftColor: "var(--vibe-primary)", // 流星拖尾效果
-                    backdropFilter: "blur(2px)",
-                    boxShadow: "inset 0 0 20px var(--vibe-primary-soft)"
+                    borderLeftColor: "var(--vibe-primary-soft)",
+                    backdropFilter: "blur(4px)",
+                    transformStyle: "preserve-3d"
                 }}
             />
 
-            {/* 内层副星环 (逆向 3D 翻转) */}
+            {/* --- Astrolabe Ring 3 (X-Axis Horizontal Spin) --- */}
             <motion.div
-                animate={{
-                    rotateX: [180, 0],
-                    rotateY: [360, 0]
-                }}
-                transition={{ duration: 15, repeat: Infinity, ease: "linear" }}
-                className="absolute w-32 h-32 rounded-full border-[1px]"
+                animate={{ rotateX: 360, rotateZ: -45 }}
+                transition={{ duration: 12, repeat: Infinity, ease: "linear" }}
+                className="absolute w-32 h-32 rounded-full border-[1px] border-dashed"
                 style={{
-                    borderColor: "rgba(255,255,255,0.05)",
-                    borderRightColor: "var(--vibe-primary)",
+                    borderColor: "rgba(255,255,255,0.3)",
+                    transformStyle: "preserve-3d"
                 }}
             />
+
+            {/* --- The Divine Core (Diamond/Octahedron illusion) --- */}
+            <motion.div
+                animate={{
+                    rotateY: [-180, 180],
+                    rotateX: [0, 360],
+                    scale: [1, 1.1, 1]
+                }}
+                transition={{
+                    rotateY: { duration: 10, repeat: Infinity, ease: "linear" },
+                    rotateX: { duration: 20, repeat: Infinity, ease: "linear" },
+                    scale: { duration: 3, repeat: Infinity, ease: "easeInOut" }
+                }}
+                className="absolute z-10 w-16 h-16 flex items-center justify-center"
+                style={{ transformStyle: "preserve-3d" }}
+            >
+                {/* Solid geometric center */}
+                <div
+                    className="absolute w-full h-full"
+                    style={{
+                        background: "linear-gradient(135deg, white 0%, var(--vibe-primary) 100%)",
+                        clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)", // Diamond Shape
+                        boxShadow: `0 0 40px var(--vibe-primary), 0 0 80px white`,
+                        mixBlendMode: "screen"
+                    }}
+                />
+                <div
+                    className="absolute w-full h-full rotate-90"
+                    style={{
+                        background: "linear-gradient(135deg, var(--vibe-primary-soft) 0%, transparent 100%)",
+                        clipPath: "polygon(50% 0%, 100% 50%, 50% 100%, 0% 50%)", // Crossed Diamond
+                        mixBlendMode: "color-dodge"
+                    }}
+                />
+            </motion.div>
         </button>
     );
 }

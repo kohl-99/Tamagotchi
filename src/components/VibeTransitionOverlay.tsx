@@ -15,7 +15,7 @@ import { useThemeStore } from "@/store/useThemeStore";
 
 export function VibeTransitionOverlay() {
     const previousPrimary = useThemeStore((s) => s.previousThemePrimary);
-    const currentPrimary = useThemeStore((s) => s.currentTheme.colors.primary);
+    const currentPrimary = useThemeStore((s) => s.currentTheme?.colors?.primary || "#7c3aed");
     const [wave, setWave] = useState<{ color: string; id: number } | null>(null);
     const lastPrimary = useRef(currentPrimary);
     const mountedRef = useRef(false);
