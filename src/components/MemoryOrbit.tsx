@@ -24,7 +24,6 @@ function MemoryDot({
     tick: number;
 }) {
     const [hovered, setHovered] = useState(false);
-    const [frozenTick, setFrozenTick] = useState<number | null>(null);
     const dotColor = useThemeStore((s) => s.currentTheme.memory.dotColor);
     const dotGlow = useThemeStore((s) => s.currentTheme.memory.dotGlow);
     const cardBg = useThemeStore((s) => s.currentTheme.memory.cardBg);
@@ -39,9 +38,19 @@ function MemoryDot({
         return { baseAngle, speed, radiusX, radiusY, tilt };
     }, [index, total]);
 
-    /* Freeze position on hover so the user can read the card */
-    const activeTick = frozenTick ?? tick;
-    const angle = config.baseAngle + activeTick * config.speed;
+    /*
+     * timeOffsetRef: accumulated "virtual time" correction.
+     * When the user hovers, we freeze the angle. When they leave,
+     * we solve for an offset such that the continuous formula
+     *   angle = baseAngle + (now + offset) * speed
+     * equals the frozen angle at the moment of release.
+     * This makes the dot resume from exactly where it stopped.
+     */
+    const frozenAngleRef = useRef<number | null>(null);
+    const timeOffsetRef = useRef<number>(0);
+
+    const liveAngle = config.baseAngle + (tick + timeOffsetRef.current) * config.speed;
+    const angle = frozenAngleRef.current ?? liveAngle;
     const x = Math.cos(angle) * config.radiusX;
     const y = Math.sin(angle) * config.radiusY;
 
@@ -59,23 +68,38 @@ function MemoryDot({
                 transform: `translate(-50%, -50%) rotate(${config.tilt}deg) scale(${scale})`,
                 zIndex: depth > 0 ? 15 : 5,
             }}
-            onMouseEnter={() => { setHovered(true); setFrozenTick(tick); }}
-            onMouseLeave={() => { setHovered(false); setFrozenTick(null); }}
+            onMouseEnter={() => {
+                setHovered(true);
+                // Freeze at the current live angle
+                frozenAngleRef.current = config.baseAngle + (tick + timeOffsetRef.current) * config.speed;
+            }}
+            onMouseLeave={() => {
+                setHovered(false);
+                if (frozenAngleRef.current !== null) {
+                    // Solve: frozenAngle = baseAngle + (Date.now() + offset) * speed
+                    // => offset = (frozenAngle - baseAngle) / speed - Date.now()
+                    timeOffsetRef.current = (frozenAngleRef.current - config.baseAngle) / config.speed - Date.now();
+                }
+                frozenAngleRef.current = null;
+            }}
         >
-            {/* Glowing dot */}
+            {/* Glowing dot — pulse uses fixed opacity range to avoid framer restart blink */}
             <motion.div
                 className="h-3.5 w-3.5 rounded-full cursor-pointer"
                 style={{
                     background: `radial-gradient(circle, ${dotColor.replace('1)', `${opacity})`)} 0%, ${dotGlow.replace('1)', `${opacity * 0.5})`)} 50%, transparent 100%)`,
                     boxShadow: `0 0 ${10 + depth * 8}px ${dotColor.replace('1)', `${opacity * 0.6})`)}, 0 0 ${20 + depth * 12}px ${dotGlow.replace('1)', `${opacity * 0.2})`)}`,
+                    opacity,
                 }}
                 animate={{
-                    opacity: [opacity * 0.8, opacity, opacity * 0.8],
+                    // Fixed range — independent of depth so framer never restarts on position change
+                    scale: [1, 1.15, 1],
                 }}
                 transition={{
                     duration: 2 + index * 0.3,
                     repeat: Infinity,
                     ease: "easeInOut",
+                    repeatType: "mirror",
                 }}
             />
 

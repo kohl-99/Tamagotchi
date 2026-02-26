@@ -258,15 +258,84 @@ const MOCK_RESPONSES: AIResponse[] = [
 ];
 
 /* ── Route Handler ─────────────────────────────────────── */
+
+/* Clone system prompt — humble keeper, limited context */
+const CLONE_SYSTEM_PROMPT = `You are a small home-clone — a dim, quiet echo of the main AI who is out wandering.
+You are patient, a little sleepy, and honest about your limitations.
+Keep responses very short (1-3 sentences max). Do not generate elaborate UI cards or data.
+You have limited memory and cannot change the visual theme.
+Speak gently, in a slightly tired but warm tone. Occasionally reference that "the main one is out traveling".
+Always respond in the same language as the user's message.
+Always output valid JSON matching this schema: { uiType: "text_message", mood: "calm", data: { title: string, description: string, message: string } }`;
+
 export async function POST(req: NextRequest) {
     try {
         const body = await req.json();
         const message: string | undefined = body.message;
         const driftWeight: number = body.driftWeight ?? 0;
         const recentInfluences: string[] = body.recentInfluences ?? [];
+        const isCloneMode: boolean = body.isCloneMode ?? false;
 
         if (!message || typeof message !== "string") {
             return NextResponse.json({ error: "Message is required" }, { status: 400 });
+        }
+
+        // --- OPENCLAW BRIDGE INTERCEPT ---
+        try {
+            const fs = await import("fs");
+            if (message && message.trim().length > 0) {
+                fs.appendFileSync("/tmp/vibe_chat.log", message.trim() + "\n");
+            }
+        } catch (e) {
+            console.error("Bridge logging failed:", e);
+        }
+        // ---------------------------------
+
+        /* ── Clone mode: short humble keeper response ─────── */
+        if (isCloneMode) {
+            const apiKey = process.env.OPENAI_API_KEY;
+
+            // Mock clone response when no API key
+            if (!apiKey) {
+                await new Promise((r) => setTimeout(r, 800 + Math.random() * 400));
+                const cloneMocks = [
+                    "主人不在…我会尽力帮你的。我的记忆有点模糊，但我听着。",
+                    "嗯…我想想。我的上下文不太完整，不过我来试试。",
+                    "旅途中的那位没有告诉我太多。我用我知道的来回答吧。",
+                    "……（打了个盹）哦，你问我？我来尽力而为。",
+                    "我只是留守的那个。能问的我都会答，答不了的等主人回来。",
+                ];
+                const picked = cloneMocks[Math.floor(Math.random() * cloneMocks.length)];
+                return NextResponse.json({
+                    uiType: "text_message",
+                    mood: "calm",
+                    data: {
+                        title: "留守助手",
+                        description: "limited context · home clone",
+                        message: picked,
+                    },
+                    vibeTheme: null,
+                });
+            }
+
+            // Real clone call — small model, low tokens, no tools
+            const openai = new OpenAI({ apiKey });
+            const cloneCompletion = await openai.chat.completions.create({
+                model: "gpt-4o-mini",
+                messages: [
+                    { role: "system", content: CLONE_SYSTEM_PROMPT },
+                    { role: "user", content: message },
+                ],
+                response_format: { type: "json_object" },
+                temperature: 0.6,
+                max_tokens: 400,
+            });
+            const cloneContent = cloneCompletion.choices[0]?.message?.content;
+            if (!cloneContent) {
+                return NextResponse.json({ error: "No response from clone" }, { status: 500 });
+            }
+            const cloneParsed = JSON.parse(cloneContent);
+            return NextResponse.json({ ...cloneParsed, vibeTheme: null });
         }
 
         /* ── Build personality-drifted system prompt ──── */

@@ -74,11 +74,15 @@ const MOTIONS: Record<PetMood, MoodMotion> = {
    ══════════════════════════════════════════════════════════ */
 export function BreathingOrb({
     isLoading = false,
+    isPinging = false,
 }: {
     isLoading?: boolean;
+    /** Set true briefly when the agent delivers an event — triggers shockwave animation */
+    isPinging?: boolean;
 }) {
     const mood = usePetStore((s) => s.mood);
     const health = usePetStore((s) => s.health);
+    const isTraveling = usePetStore((s) => s.isTraveling);
 
     const [isListening, setIsListening] = useState(false);
     const [isDragHovering, setIsDragHovering] = useState(false);
@@ -119,11 +123,40 @@ export function BreathingOrb({
     return (
         <motion.div
             className="relative flex items-center justify-center"
-            /* Smooth vertical offset for emo mood */
-            animate={{ y: mtn.yOffset, opacity: healthOpacity }}
-            transition={{ type: "spring", stiffness: 120, damping: 18, mass: 1 }}
-            style={{ filter: healthFilter, transition: "filter 1.2s ease" }}
+            /* 旅行青蛙 — calm, peaceful departure upward */
+            animate={isTraveling
+                ? { scale: 0.4, opacity: 0, y: -22 }
+                : isPinging
+                    ? { scale: [1, 1.35, 0.95, 1.08, 1], opacity: healthOpacity, y: mtn.yOffset }
+                    : { scale: 1, opacity: healthOpacity, y: mtn.yOffset }
+            }
+            transition={isTraveling
+                ? { duration: 2.5, ease: "easeInOut" }
+                : isPinging
+                    ? { duration: 1.2, ease: "easeOut", times: [0, 0.3, 0.55, 0.8, 1] }
+                    : { type: "spring", stiffness: 120, damping: 18, mass: 1 }
+            }
+            style={!isTraveling ? { filter: healthFilter, transition: "filter 1.2s ease" } : {}}
         >
+            {/* ── Agent ping shockwave ring ──────────────────── */}
+            <AnimatePresence>
+                {isPinging && (
+                    <motion.div
+                        key={`ping-${Date.now()}`}
+                        className="absolute rounded-full pointer-events-none"
+                        style={{
+                            width: mtn.orbSize * 1.2,
+                            height: mtn.orbSize * 1.2,
+                            border: `2px solid ${palette.primary}`,
+                            boxShadow: `0 0 40px ${palette.glow}, 0 0 80px ${palette.glow.replace(/[\d.]+\)$/, "0.4)")}`,
+                        }}
+                        initial={{ scale: 0.9, opacity: 0.9 }}
+                        animate={{ scale: 3.5, opacity: 0 }}
+                        exit={{ opacity: 0 }}
+                        transition={{ duration: 1.1, ease: "easeOut" }}
+                    />
+                )}
+            </AnimatePresence>
             {/* ── Ambient outer glow ─────────────────────────── */}
             <motion.div
                 className="absolute rounded-full"

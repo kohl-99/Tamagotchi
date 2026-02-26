@@ -11,31 +11,39 @@ import { useThemeStore } from "@/store/useThemeStore";
 
 /* ── LOCATION BEACON (top-left) ────────────────────────── */
 function LocationBeacon() {
-    const location = usePetStore((s) => s.location);
-    const beaconColor = useThemeStore((s) => s.currentTheme.hud.location);
+    const isTraveling = usePetStore((s) => s.isTraveling);
 
     return (
         <div className="fixed top-5 left-5 z-50 flex items-center gap-2.5">
             <div className="relative">
                 <motion.div
                     className="h-1.5 w-1.5 rounded-full"
-                    style={{ background: beaconColor }}
-                    animate={{ opacity: [0.4, 1, 0.4], scale: [1, 1.3, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    style={{ background: isTraveling ? "#a78bfa" : "var(--vibe-primary)" }}
+                    animate={isTraveling
+                        ? { opacity: [0.2, 1, 0.2], scale: [1, 1.8, 1] }
+                        : { opacity: [0.4, 1, 0.4], scale: [1, 1.3, 1] }
+                    }
+                    transition={{ duration: isTraveling ? 0.5 : 2, repeat: Infinity, ease: "easeInOut" }}
                 />
                 <motion.div
                     className="absolute inset-0 rounded-full"
-                    style={{ background: beaconColor }}
+                    style={{ background: isTraveling ? "#a78bfa" : "var(--vibe-primary)" }}
                     animate={{ opacity: [0.2, 0, 0.2], scale: [1, 3, 1] }}
-                    transition={{ duration: 2, repeat: Infinity, ease: "easeInOut" }}
+                    transition={{ duration: isTraveling ? 0.5 : 2, repeat: Infinity, ease: "easeInOut" }}
                 />
             </div>
-            <span
+            <motion.span
+                key={isTraveling ? "traveling" : "online"}
+                initial={{ opacity: 0, y: 4 }}
+                animate={{ opacity: 1, y: 0 }}
+                transition={{ duration: 0.3 }}
                 className="text-[9px] font-light uppercase tracking-[0.25em] vibe-transition"
-                style={{ color: "var(--vibe-text-muted)", fontFeatureSettings: "'tnum'" }}
+                style={{
+                    color: isTraveling ? "#a78bfa" : "var(--vibe-text-muted)",
+                }}
             >
-                {location}
-            </span>
+                {isTraveling ? "transit…" : "online"}
+            </motion.span>
         </div>
     );
 }
