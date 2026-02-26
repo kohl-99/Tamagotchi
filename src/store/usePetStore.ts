@@ -44,11 +44,16 @@ interface PetState {
     /* ── Chat Feed ───────────────────────────────────────── */
     chatHistory: ChatMessage[];
 
+    /* ── Morphological Evolution ────────────────────────── */
+    xp: number;
+    level: number;
+
     /* ── Actions ────────────────────────────────────────── */
     setHealth: (v: number) => void;
     setMood: (m: PetMood) => void;
     setLocation: (l: string) => void;
     setSyncRate: (v: number) => void;
+    addXP: (amount: number) => void;
 
     /* ── Memory ─────────────────────────────────────────── */
     addMemory: (text: string) => void;
@@ -114,11 +119,21 @@ export const usePetStore = create<PetState>()((set, get) => ({
     /* ── Chat Feed ─────────────────────────────── */
     chatHistory: [],
 
-    /* setters */
+    /* ── Morphological Evolution ────────────────────────── */
+    xp: 30000,
+    level: 31,
+
+    /* ── Actions ────────────────────────────────────────── */
     setHealth: (v) => set({ health: clamp(v) }),
     setMood: (m) => set({ mood: m }),
     setLocation: (l) => set({ location: l }),
     setSyncRate: (v) => set({ syncRate: clamp(v) }),
+    addXP: (amount: number) =>
+        set((s) => {
+            const newXp = s.xp + amount;
+            const newLevel = Math.floor(newXp / 1000) + 1;
+            return { xp: newXp, level: newLevel };
+        }),
 
     /* memory */
     addMemory: (text) =>
