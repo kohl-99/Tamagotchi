@@ -3,7 +3,7 @@
 import { useState, useCallback, useRef, useMemo, useEffect } from "react";
 import { AnimatePresence, motion } from "framer-motion";
 import { Navigation } from "lucide-react";
-import { BreathingOrb } from "@/components/BreathingOrb";
+import ThreeDPet from "@/components/ThreeDPet";
 import { CloneOrb } from "@/components/CloneOrb";
 import { MemoryOrbit } from "@/components/MemoryOrbit";
 import { ChatInput } from "@/components/ChatInput";
@@ -35,13 +35,14 @@ const ORBIT_ZONES = [
   { x: 1, y: 55, w: 280 },   // bottom-left
   { x: 60, y: 52, w: 280 },  // bottom-right
 ];
-
 export default function Home() {
   const [isLoading, setIsLoading] = useState(false);
   const setMood = usePetStore((s) => s.setMood);
   const [slots, setSlots] = useState<WidgetSlot[]>([]);
   const [expandedId, setExpandedId] = useState<string | null>(null);
   const idCounter = useRef(0);
+
+  const [generativeOrbCode, setGenerativeOrbCode] = useState<string | null>(null);
 
   /* Travel state */
   const isTraveling = usePetStore((s) => s.isTraveling);
@@ -76,6 +77,14 @@ export default function Home() {
         return next;
       });
     }, []),
+
+    // ── NEW: handle orb updates from OpenClaw ──────────
+    onOrbUpdate: useCallback(({ orbCode }: { orbCode?: string }) => {
+      if (orbCode) {
+        // Agent sent raw HTML — render it directly
+        setGenerativeOrbCode(orbCode);
+      }
+    }, []),
   });
 
   useEffect(() => {
@@ -103,6 +112,7 @@ export default function Home() {
     setIsLoading(true);
     setMood("thinking");
     usePetStore.getState().addChatMessage({ role: "user", text: message });
+    usePetStore.getState().setIsTransitioning(true);
 
     try {
       const res = await fetch("/api/chat", {
@@ -115,8 +125,11 @@ export default function Home() {
 
       const data = await res.json();
 
-      // If we are getting a vibe theme directly from the mock response in clone mode
-      const { vibeTheme, ...responseData } = data as AIResponseUI & { vibeTheme?: Record<string, unknown> };
+      const { vibeTheme, genes, ...responseData } = data as AIResponseUI & { vibeTheme?: Record<string, unknown>, genes?: Record<string, unknown> };
+
+      // Add the AI's response text to chat
+      const aiMessage = responseData.data?.message || responseData.data?.description || "✓";
+      usePetStore.getState().addChatMessage({ role: "ai", text: aiMessage });
 
       // Set the mood based on immediate acknowledgment
       if (responseData.mood) {
@@ -133,14 +146,16 @@ export default function Home() {
         }
       }
 
-      // We explicitly DO NOT push the responseData into widgets here anymore.
-      // The OpenClaw Daemon will handle generating the UI payloads asynchronously 
-      // and hit the onUIUpdate callback via SSE webhook.
+      /* ── Apply morphology if triggered ── */
+      if (genes) {
+        usePetStore.getState().updateGenes(genes);
+      }
 
     } catch (err) {
       console.error("Failed:", err);
       setMood("calm");
     } finally {
+      usePetStore.getState().setIsTransitioning(false);
       setIsLoading(false);
     }
   }, []);
@@ -187,11 +202,9 @@ export default function Home() {
       </AnimatePresence>
 
       {/* ── Orb container: main + clone ─────────────────── */}
-      <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 z-20"
-        style={{ width: 400, height: 400 }}>
-        <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
-          <BreathingOrb isLoading={isLoading} isPinging={isPinging} />
-          {/* CloneOrb appears here after main departs */}
+      <div className="absolute inset-0 z-20">
+        <div className="absolute inset-0">
+          <ThreeDPet />
           <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2">
             <CloneOrb />
           </div>

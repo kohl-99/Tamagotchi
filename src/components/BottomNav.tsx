@@ -3,12 +3,12 @@
 import { usePathname } from "next/navigation";
 import Link from "next/link";
 import { motion } from "framer-motion";
-import { Home, Compass, Settings } from "lucide-react";
+import { Home, Orbit, Settings } from "lucide-react";
 import { useThemeStore } from "@/store/useThemeStore";
 
 const navItems = [
     { id: "home", label: "Home", icon: Home, href: "/" },
-    { id: "discover", label: "Discover", icon: Compass, href: "/discover" },
+    { id: "space", label: "Space", icon: Orbit, href: "/discover" },
     { id: "settings", label: "Settings", icon: Settings, href: "/settings" },
 ] as const;
 

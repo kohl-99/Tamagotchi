@@ -354,6 +354,7 @@ export async function POST(req: NextRequest) {
             const msg = message.toLowerCase();
             let mock: AIResponse;
             let vibeTheme: Record<string, unknown> | null = null;
+            let genes: Record<string, unknown> | null = null;
 
             // Mock vibe switching
             if (msg.includes("dark") || msg.includes("punk") || msg.includes("赛博") || msg.includes("酷")) {
@@ -437,8 +438,50 @@ export async function POST(req: NextRequest) {
                 mock = MOCK_RESPONSES[0];
             } else if (msg.includes("approve") || msg.includes("optimize") || msg.includes("clean") || msg.includes("确认")) {
                 mock = MOCK_RESPONSES[1];
-            } else if (msg.includes("weather") || msg.includes("mood") || msg.includes("天气") || msg.includes("氛围")) {
-                mock = MOCK_RESPONSES[2];
+            } else if (msg.includes("cube") || msg.includes("hacker") || msg.includes("方块") || msg.includes("黑客")) {
+                genes = { parts: [{ shape: "box", position: [0, 0, 0], scale: [1, 1, 1], animation: "rotate" }, { shape: "box", position: [1.5, 0, 0], scale: [0.3, 0.3, 0.3], animation: "orbit" }, { shape: "box", position: [-1.5, 0, 0], scale: [0.3, 0.3, 0.3], animation: "orbit" }, { shape: "box", position: [0, 1.5, 0], scale: [0.2, 0.2, 0.2], animation: "orbit" }, { shape: "ring", position: [0, 0, 0], scale: [1.8, 1.8, 0.02], animation: "orbit" }], materialType: "Hologram", baseColor: "#00ff00", emissiveColor: "#00ff00", emissiveIntensity: 2.0, wireframe: true, roughness: 1.0, metalness: 0.0, transmission: 0.0, spinSpeed: 3.0, floatHeight: 0.5 };
+                mock = {
+                    uiType: "text_message",
+                    mood: "thinking",
+                    data: {
+                        title: "Morphology Shift — Hacker Cube",
+                        description: "System Overridden.",
+                        message: "Morphing into hacker cube mode. Wireframe active. Speed increased.",
+                    },
+                };
+            } else if (msg.includes("ethereal") || msg.includes("glowing") || msg.includes("glow")) {
+                genes = { parts: [{ shape: "sphere", position: [0, 0, 0], scale: [1.2, 1.2, 1.2], animation: "pulse" }, { shape: "ring", position: [0, 0, 0], scale: [1.8, 1.8, 0.02], animation: "orbit" }, { shape: "ring", position: [0, 0, 0], scale: [2.2, 2.2, 0.015], animation: "orbit" }], materialType: "Glass", baseColor: "#ffffff", emissiveColor: "#00ffff", emissiveIntensity: 3.0, wireframe: false, roughness: 0.0, metalness: 0.0, transmission: 1.0, spinSpeed: 0.5, floatHeight: 1.5 };
+                mock = {
+                    uiType: "text_message",
+                    mood: "calm",
+                    data: {
+                        title: "Morphology Shift — Ethereal Core",
+                        description: "Energy stabilized.",
+                        message: "I am now an ethereal glowing core. Do you feel the energy?",
+                    },
+                };
+            } else if (msg.includes("robot") || msg.includes("tech") || msg.includes("未来") || msg.includes("机械")) {
+                genes = { parts: [{ shape: "torusKnot", position: [0, 0, 0], scale: [0.8, 0.8, 0.8], animation: "rotate" }, { shape: "box", position: [1.4, 0, 0], scale: [0.2, 0.2, 0.2], animation: "orbit" }, { shape: "box", position: [-1.4, 0, 0], scale: [0.2, 0.2, 0.2], animation: "orbit" }, { shape: "box", position: [0, 0, 1.4], scale: [0.2, 0.2, 0.2], animation: "orbit" }, { shape: "box", position: [0, 0, -1.4], scale: [0.2, 0.2, 0.2], animation: "orbit" }, { shape: "ring", position: [0, 0, 0], scale: [1.6, 1.6, 0.02], animation: "orbit" }], materialType: "LiquidMetal", baseColor: "#c0c0c0", emissiveColor: "#c0c0c0", emissiveIntensity: 0.5, wireframe: false, roughness: 0.1, metalness: 1.0, transmission: 0.0, spinSpeed: 2.0, floatHeight: 1.0 };
+                mock = {
+                    uiType: "text_message",
+                    mood: "excited",
+                    data: {
+                        title: "Morphology Shift — Tech Core",
+                        description: "Ready for input.",
+                        message: "Metallic geometry loaded. Torus knot stable.",
+                    },
+                };
+            } else if (msg.includes("cute") || msg.includes("bunny") || msg.includes("rabbit") || msg.includes("可爱") || msg.includes("兔子")) {
+                genes = { parts: [{ shape: "sphere", position: [0, 0, 0], scale: [0.8, 0.7, 0.8], animation: "pulse" }, { shape: "sphere", position: [0, 0.6, 0.3], scale: [0.5, 0.5, 0.5], animation: "bob" }, { shape: "cone", position: [0.2, 1.1, 0.3], scale: [0.12, 0.4, 0.12] }, { shape: "cone", position: [-0.2, 1.1, 0.3], scale: [0.12, 0.4, 0.12] }, { shape: "sphere", position: [0.15, 0.7, 0.65], scale: [0.08, 0.08, 0.08], color: "#000000" }, { shape: "sphere", position: [-0.15, 0.7, 0.65], scale: [0.08, 0.08, 0.08], color: "#000000" }, { shape: "cone", position: [-0.6, 0.2, 0], scale: [0.1, 0.3, 0.1], animation: "wave" }], materialType: "Glass", baseColor: "#ffb6c1", emissiveColor: "#ffffff", emissiveIntensity: 0.5, wireframe: false, roughness: 0.1, metalness: 0.0, transmission: 1.0, spinSpeed: 0.8, floatHeight: 1.2 };
+                mock = {
+                    uiType: "text_message",
+                    mood: "excited",
+                    data: {
+                        title: "Morphology Shift — Glass Sphere",
+                        description: "Feeling cute.",
+                        message: "Hopping back into my glass sphere form! So shiny.",
+                    },
+                };
             } else if (msg.includes("chart") || msg.includes("focus") || msg.includes("hours") || msg.includes("图表") || msg.includes("专注")) {
                 mock = MOCK_RESPONSES[4];
             } else if (msg.includes("trend") || msg.includes("portfolio") || msg.includes("stock") || msg.includes("趋势") || msg.includes("投资")) {
@@ -451,7 +494,7 @@ export async function POST(req: NextRequest) {
                 mock = MOCK_RESPONSES[3];
             }
 
-            return NextResponse.json({ ...mock, vibeTheme });
+            return NextResponse.json({ ...mock, vibeTheme, genes });
         }
 
         // ── Real OpenAI call with Function Calling ───────────
@@ -516,6 +559,45 @@ export async function POST(req: NextRequest) {
                     },
                 },
             },
+            {
+                type: "function",
+                function: {
+                    name: "mutate_pet_genes",
+                    description: "Mutate the physical appearance by building a 3D creature from primitive shapes.",
+                    parameters: {
+                        type: "object",
+                        properties: {
+                            parts: {
+                                type: "array",
+                                description: "Array of body parts. Use 3-12 parts. Each part is a primitive shape with position, scale, and animation.",
+                                items: {
+                                    type: "object",
+                                    properties: {
+                                        shape: { type: "string", enum: ["sphere", "box", "cylinder", "cone", "torus", "torusKnot", "icosahedron", "octahedron", "ring"] },
+                                        position: { type: "array", items: { type: "number" }, description: "[x, y, z] offset. Range: -3 to 3" },
+                                        scale: { type: "array", items: { type: "number" }, description: "[x, y, z] scale. Range: 0.05 to 3.0" },
+                                        rotation: { type: "array", items: { type: "number" }, description: "[x, y, z] radians. Optional" },
+                                        color: { type: "string", description: "Hex color override. Optional" },
+                                        animation: { type: "string", enum: ["rotate", "bob", "pulse", "wave", "orbit", "none"] }
+                                    },
+                                    required: ["shape", "position"]
+                                }
+                            },
+                            materialType: { type: "string", enum: ["Glass", "Hologram", "LiquidMetal", "MattePlastic"] },
+                            baseColor: { type: "string", description: "Hex color code for the body." },
+                            emissiveColor: { type: "string" },
+                            emissiveIntensity: { type: "number" },
+                            wireframe: { type: "boolean" },
+                            roughness: { type: "number" },
+                            metalness: { type: "number" },
+                            transmission: { type: "number" },
+                            spinSpeed: { type: "number" },
+                            floatHeight: { type: "number" },
+                        },
+                        required: ["parts", "materialType", "baseColor", "emissiveColor", "emissiveIntensity", "wireframe", "roughness", "metalness", "transmission", "spinSpeed", "floatHeight"]
+                    }
+                }
+            }
         ];
 
         const completion = await openai.chat.completions.create({
@@ -535,8 +617,10 @@ export async function POST(req: NextRequest) {
 
         const choice = completion.choices[0];
         let vibeTheme: Record<string, unknown> | null = null;
+        let genes: Record<string, unknown> | null = null;
+        let resolvedContent = choice?.message?.content;
 
-        // Check for tool calls (vibe theme change)
+        // Check for tool calls (vibe theme change or morph pet)
         if (choice?.message?.tool_calls && choice.message.tool_calls.length > 0) {
             for (const toolCall of choice.message.tool_calls) {
                 // eslint-disable-next-line @typescript-eslint/no-explicit-any
@@ -548,23 +632,45 @@ export async function POST(req: NextRequest) {
                         console.error("Failed to parse vibe theme:", tc.function?.arguments);
                     }
                 }
+                if (tc.function?.name === "mutate_pet_genes") {
+                    try {
+                        genes = JSON.parse(tc.function.arguments);
+                    } catch {
+                        console.error("Failed to parse pet morphology:", tc.function?.arguments);
+                    }
+                }
             }
 
             // If the model only called a tool without generating content,
             // make a second call to get the actual response
             if (!choice.message.content) {
+                const followUpMsgs: OpenAI.Chat.Completions.ChatCompletionMessageParam[] = [
+                    { role: "system", content: systemPrompt },
+                    { role: "user", content: message },
+                    choice.message as OpenAI.Chat.Completions.ChatCompletionMessageParam,
+                ];
+
+                for (const toolCall of choice.message.tool_calls) {
+                    const funcName = (toolCall as any).function?.name;
+                    if (funcName === "update_vibe_theme") {
+                        followUpMsgs.push({
+                            role: "tool",
+                            tool_call_id: toolCall.id,
+                            content: JSON.stringify({ status: "applied", theme: vibeTheme }),
+                        });
+                    }
+                    if (funcName === "mutate_pet_genes") {
+                        followUpMsgs.push({
+                            role: "tool",
+                            tool_call_id: toolCall.id,
+                            content: JSON.stringify({ status: "applied", genes: genes }),
+                        });
+                    }
+                }
+
                 const followUp = await openai.chat.completions.create({
                     model: "gpt-4o",
-                    messages: [
-                        { role: "system", content: systemPrompt },
-                        { role: "user", content: message },
-                        choice.message,
-                        {
-                            role: "tool",
-                            tool_call_id: choice.message.tool_calls[0].id,
-                            content: JSON.stringify({ status: "applied", theme: vibeTheme }),
-                        },
-                    ],
+                    messages: followUpMsgs,
                     response_format: {
                         type: "json_schema",
                         json_schema: responseSchema,
@@ -573,22 +679,16 @@ export async function POST(req: NextRequest) {
                     max_tokens: 1200,
                 });
 
-                const followUpContent = followUp.choices[0]?.message?.content;
-                if (followUpContent) {
-                    const parsed: AIResponse = JSON.parse(followUpContent);
-                    return NextResponse.json({ ...parsed, vibeTheme });
-                }
+                resolvedContent = followUp.choices[0]?.message?.content;
             }
         }
 
-        const content = choice?.message?.content;
-
-        if (!content) {
+        if (!resolvedContent) {
             return NextResponse.json({ error: "No response from AI" }, { status: 500 });
         }
 
-        const parsed: AIResponse = JSON.parse(content);
-        return NextResponse.json({ ...parsed, vibeTheme });
+        const parsed: AIResponse = JSON.parse(resolvedContent);
+        return NextResponse.json({ ...parsed, vibeTheme, genes });
     } catch (error) {
         console.error("Chat API error:", error);
         return NextResponse.json({ error: "Internal server error" }, { status: 500 });

@@ -12,7 +12,7 @@
 import * as os from "os";
 
 /* ── Types ──────────────────────────────────────────────── */
-type AgentAction = "update_status" | "post_echo" | "deliver_souvenir";
+type AgentAction = "update_status" | "post_echo" | "deliver_souvenir" | "update_orb";
 
 interface SyncPayload {
     action: AgentAction;
@@ -108,13 +108,14 @@ export const toolDefinition = {
         "Send a real-time event to the Project VIBE Cyber-Sanctuary web app. " +
         "Use action='update_status' to update mood/health, " +
         "'post_echo' to leave a floating text message on the canvas, " +
-        "or 'deliver_souvenir' to trigger a postcard arrival with dramatic visual effects.",
+        "'deliver_souvenir' to trigger a postcard arrival, " +
+        "or 'update_orb' to COMPLETELY CHANGE the visual appearance of the central orb/entity based on a user's prompt (you must generate pure HTML code into data.orbCode).",
     parameters: {
         type: "object",
         properties: {
             action: {
                 type: "string",
-                enum: ["update_status", "post_echo", "deliver_souvenir"],
+                enum: ["update_status", "post_echo", "deliver_souvenir", "update_orb"],
                 description: "Which event to send to the sanctuary",
             },
             data: {
@@ -123,7 +124,20 @@ export const toolDefinition = {
                     "Event payload. " +
                     "For update_status: { mood?, health? }. " +
                     "For post_echo: { text, x?, y? }. " +
-                    "For deliver_souvenir: { title?, message, link?, scene? }.",
+                    "For deliver_souvenir: { title?, message, link?, scene? }. " +
+                    "For update_orb: { orbCode: 'raw HTML document string starting with <!DOCTYPE html> containing the visual design' }. CRITICAL: For update_orb, you MUST write self-contained HTML/CSS/JS generating the exact effect the user requested.",
+                properties: {
+                    mood: { type: "string" },
+                    health: { type: "number" },
+                    text: { type: "string" },
+                    x: { type: "number" },
+                    y: { type: "number" },
+                    title: { type: "string" },
+                    message: { type: "string" },
+                    link: { type: "string" },
+                    scene: { type: "string" },
+                    orbCode: { type: "string", description: "Fully self-contained HTML document for the orb visualization." }
+                }
             },
         },
         required: ["action", "data"],

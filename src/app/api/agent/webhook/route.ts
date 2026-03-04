@@ -20,7 +20,9 @@ const VALID_ACTIONS: AgentAction[] = [
     "post_echo",
     "deliver_souvenir",
     "update_ui_state",
-    "post_chat_message"
+    "post_chat_message",
+    "update_orb",
+    "update_genes"
 ];
 
 export async function POST(req: NextRequest) {

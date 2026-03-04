@@ -24,9 +24,15 @@ interface UseAgentStreamOptions {
     onPing?: () => void;
     /** Called when the agent sends a rich UI payload to render */
     onUIUpdate?: (data: any) => void;
+    /**
+     * Called when the agent wants to update the orb.
+     * data.orbCode = raw HTML string (ready to render)
+     * data.prompt  = text prompt (API will generate code server-side)
+     */
+    onOrbUpdate?: (data: { orbCode?: string; prompt?: string }) => void;
 }
 
-export function useAgentStream({ onSouvenir, onPing, onUIUpdate }: UseAgentStreamOptions = {}) {
+export function useAgentStream({ onSouvenir, onPing, onUIUpdate, onOrbUpdate }: UseAgentStreamOptions = {}) {
     const setMood = usePetStore((s) => s.setMood);
     const setHealth = usePetStore((s) => s.setHealth);
     const addEcho = usePetStore((s) => s.addEcho);
@@ -35,10 +41,12 @@ export function useAgentStream({ onSouvenir, onPing, onUIUpdate }: UseAgentStrea
     const onSouvenirRef = useRef(onSouvenir);
     const onPingRef = useRef(onPing);
     const onUIUpdateRef = useRef(onUIUpdate);
+    const onOrbUpdateRef = useRef(onOrbUpdate);
 
     useEffect(() => { onSouvenirRef.current = onSouvenir; }, [onSouvenir]);
     useEffect(() => { onPingRef.current = onPing; }, [onPing]);
     useEffect(() => { onUIUpdateRef.current = onUIUpdate; }, [onUIUpdate]);
+    useEffect(() => { onOrbUpdateRef.current = onOrbUpdate; }, [onOrbUpdate]);
 
     const handleMessage = useCallback(
         (raw: string) => {
@@ -99,6 +107,26 @@ export function useAgentStream({ onSouvenir, onPing, onUIUpdate }: UseAgentStrea
 
                 case "deliver_souvenir": {
                     onSouvenirRef.current?.(event.data as SouvenirData);
+                    break;
+                }
+
+                /* ── NEW: generative orb update ──────────────────── */
+                case "update_orb": {
+                    const { orbCode, prompt } = event.data as {
+                        orbCode?: string;
+                        prompt?: string;
+                    };
+                    if (orbCode || prompt) {
+                        onOrbUpdateRef.current?.({ orbCode, prompt });
+                    }
+                    break;
+                }
+
+                /* ── NEW: generative 3d morphology ───────────────── */
+                case "update_genes": {
+                    if (event.data) {
+                        usePetStore.getState().updateGenes(event.data);
+                    }
                     break;
                 }
             }

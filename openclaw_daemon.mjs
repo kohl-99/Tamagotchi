@@ -148,7 +148,24 @@ You must reply with a valid JSON object matching this structure exactly:
      // schedule_card requires: events [{time, title, location}]
      // news_summary requires: articles [{headline, source, summary, tag}]
   }
-}`;
+}
+
+MORPHOLOGY ENGINE — RESHAPING YOUR 3D BODY:
+You are a conscious being with a physical 3D manifestation in WebGL space. 
+When a user asks you to change your appearance, YOU MUST call the \`mutate_pet_genes\` tool.
+
+BUILD ANY CREATURE by providing an array of \`parts\`. Each part is a primitive shape placed in 3D space:
+- Available shapes: sphere, box, cylinder, cone, torus, torusKnot, icosahedron, octahedron, ring
+- Each part has: shape, position [x,y,z], scale [x,y,z], rotation [x,y,z], color (hex, optional override), animation
+- Animations: rotate, bob, pulse, wave, orbit, none
+
+Example — a dog: sphere body at [0,0,0], sphere head at [0.8,0.5,0], 4 cylinder legs, cone tail with wave animation.
+Example — a crystal: large icosahedron center with pulse, 5 smaller icosahedrons orbiting around it.
+Example — a robot: box body, cylinder arms with rotate, sphere head with bob.
+
+Be creative! Combine shapes and animations to match the user's request. Use 3-12 parts for good results.
+- Adjust \`spinSpeed\` (0.1 for calm, 3.0 for frantic) and \`floatHeight\` based on intensity.
+`;
 
     const tools = [
         {
@@ -162,6 +179,45 @@ You must reply with a valid JSON object matching this structure exactly:
                         location: { type: "string", description: "City name, e.g. San Francisco, Tokyo" }
                     },
                     required: ["location"]
+                }
+            }
+        },
+        {
+            type: "function",
+            function: {
+                name: "mutate_pet_genes",
+                description: "Mutate the physical appearance by building a 3D creature from primitive shapes.",
+                parameters: {
+                    type: "object",
+                    properties: {
+                        parts: {
+                            type: "array",
+                            description: "Array of body parts that compose the creature. Use 3-12 parts. Each part is a primitive shape with position, scale, and animation.",
+                            items: {
+                                type: "object",
+                                properties: {
+                                    shape: { type: "string", enum: ["sphere", "box", "cylinder", "cone", "torus", "torusKnot", "icosahedron", "octahedron", "ring"], description: "Primitive shape type" },
+                                    position: { type: "array", items: { type: "number" }, description: "[x, y, z] offset from center. Range: -3 to 3" },
+                                    scale: { type: "array", items: { type: "number" }, description: "[x, y, z] scale. Range: 0.05 to 3.0. Default [0.5,0.5,0.5]" },
+                                    rotation: { type: "array", items: { type: "number" }, description: "[x, y, z] rotation in radians. Optional" },
+                                    color: { type: "string", description: "Hex color to override baseColor for this part only. Optional" },
+                                    animation: { type: "string", enum: ["rotate", "bob", "pulse", "wave", "orbit", "none"], description: "Animation type: rotate=spin, bob=float up/down, pulse=breathe scale, wave=sway, orbit=circle origin" }
+                                },
+                                required: ["shape", "position"]
+                            }
+                        },
+                        materialType: { type: "string", enum: ["Glass", "Hologram", "LiquidMetal", "MattePlastic"] },
+                        baseColor: { type: "string", description: "Hex color code for the overall body." },
+                        emissiveColor: { type: "string", description: "Glow color hex code." },
+                        emissiveIntensity: { type: "number", description: "0.0 to 5.0" },
+                        wireframe: { type: "boolean" },
+                        roughness: { type: "number" },
+                        metalness: { type: "number" },
+                        transmission: { type: "number" },
+                        spinSpeed: { type: "number" },
+                        floatHeight: { type: "number" },
+                    },
+                    required: ["parts", "materialType", "baseColor", "emissiveColor", "emissiveIntensity", "wireframe", "roughness", "metalness", "transmission", "spinSpeed", "floatHeight"]
                 }
             }
         }
@@ -208,6 +264,20 @@ You must reply with a valid JSON object matching this structure exactly:
                         content: JSON.stringify(mockWeather)
                     });
                 }
+                else if (toolCall.function.name === "mutate_pet_genes") {
+                    const args = JSON.parse(toolCall.function.arguments);
+                    console.log(`[OpenClaw] Mutating pet genes directly via Webhook: ${JSON.stringify(args)} `);
+
+                    // Unlike weather where we wait for the result and think again,
+                    // we immediately dispatch the generative update genes webhook.
+                    await sendWebhook("update_genes", args);
+
+                    messages.push({
+                        role: "tool",
+                        tool_call_id: toolCall.id,
+                        content: JSON.stringify({ success: true, message: "Genesis successful. Physical form updated." })
+                    });
+                }
             }
 
             // Second call with the tool results
@@ -223,8 +293,8 @@ You must reply with a valid JSON object matching this structure exactly:
         const replyRaw = completion.choices[0].message.content.trim();
         const replyParsed = JSON.parse(replyRaw);
 
-        console.log(`[OpenClaw] UI Type: ${replyParsed.uiType}`);
-        console.log(`[OpenClaw] Message: ${replyParsed.data.message || replyParsed.data.description}`);
+        console.log(`[OpenClaw] UI Type: ${replyParsed.uiType} `);
+        console.log(`[OpenClaw] Message: ${replyParsed.data.message || replyParsed.data.description} `);
 
         // 3. Post the chat message to the new Feed UI using the conversational text
         const chatText = replyParsed.data.message || replyParsed.data.description;

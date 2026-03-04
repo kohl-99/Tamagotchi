@@ -6,6 +6,39 @@ import { create } from "zustand";
 
 export type PetMood = "calm" | "excited" | "emo" | "thinking";
 
+export type PartShape = 'sphere' | 'box' | 'cylinder' | 'cone' | 'torus' | 'torusKnot' | 'icosahedron' | 'octahedron' | 'ring';
+export type PartAnimation = 'rotate' | 'bob' | 'pulse' | 'wave' | 'orbit' | 'none';
+
+export interface CreaturePart {
+    shape: PartShape;
+    position: [number, number, number];
+    scale?: [number, number, number];
+    rotation?: [number, number, number];
+    color?: string;                        // override baseColor for this part
+    animation?: PartAnimation;
+}
+
+export interface PetGenes {
+    // Array of body parts that compose the creature
+    parts: CreaturePart[];
+
+    // Core Material mapping (applied to all parts unless overridden)
+    materialType: 'Glass' | 'Hologram' | 'LiquidMetal' | 'MattePlastic';
+    baseColor: string;
+    emissiveColor: string;
+    emissiveIntensity: number;
+    wireframe: boolean;
+
+    // Physical traits
+    roughness: number;
+    metalness: number;
+    transmission: number;
+
+    // Kinematics
+    spinSpeed: number;
+    floatHeight: number;
+}
+
 export interface Memory {
     id: string;
     text: string;
@@ -33,6 +66,7 @@ interface PetState {
     mood: PetMood;
     location: string;
     syncRate: number;
+    genes: PetGenes;
     memories: Memory[];
 
     /* ── Travel ──────────────────────────────────────────── */
@@ -44,6 +78,12 @@ interface PetState {
     /* ── Chat Feed ───────────────────────────────────────── */
     chatHistory: ChatMessage[];
 
+    /* ── Transition state ────────────────────────────────── */
+    isTransitioning: boolean;
+
+    /* ── Nebula Weather ──────────────────────────────────── */
+    nebulaWeather: 'calm' | 'monsoon';
+
     /* ── Morphological Evolution ────────────────────────── */
     xp: number;
     level: number;
@@ -54,6 +94,7 @@ interface PetState {
     setLocation: (l: string) => void;
     setSyncRate: (v: number) => void;
     addXP: (amount: number) => void;
+    updateGenes: (newGenes: Partial<PetGenes>) => void;
 
     /* ── Memory ─────────────────────────────────────────── */
     addMemory: (text: string) => void;
@@ -72,7 +113,10 @@ interface PetState {
     /* ── Spatial Echoes & Chat ───────────────────────────── */
     addEcho: (echo: Omit<Echo, "id" | "timestamp">) => void;
     removeEcho: (id: string) => void;
-    addChatMessage: (msg: Omit<ChatMessage, "id" | "timestamp">) => void;
+    addChatMessage: (msg: Omit<ChatMessage, "id" | "timestamp"> & { id?: string }) => void;
+    removeChatMessage: (id: string) => void;
+    setIsTransitioning: (v: boolean) => void;
+    setNebulaWeather: (w: 'calm' | 'monsoon') => void;
 }
 
 const clamp = (v: number, min = 0, max = 100) =>
@@ -86,6 +130,22 @@ export const usePetStore = create<PetState>()((set, get) => ({
     mood: "calm",
     location: "neural void",
     syncRate: 72,
+    genes: {
+        parts: [
+            { shape: 'sphere', position: [0, 0, 0], scale: [1.2, 1.2, 1.2], animation: 'pulse' },
+            { shape: 'ring', position: [0, 0, 0], scale: [1.8, 1.8, 0.02], animation: 'orbit' },
+        ],
+        materialType: 'Glass',
+        baseColor: '#ffffff',
+        emissiveColor: '#ffffff',
+        emissiveIntensity: 0.5,
+        wireframe: false,
+        roughness: 0.1,
+        metalness: 0.1,
+        transmission: 1.0,
+        spinSpeed: 1.0,
+        floatHeight: 1.0
+    },
     memories: [
         { id: "m1", text: "you like coffee at 7am", timestamp: Date.now() - 86400000 },
         { id: "m2", text: "thursday evenings are always free", timestamp: Date.now() - 72000000 },
@@ -118,6 +178,8 @@ export const usePetStore = create<PetState>()((set, get) => ({
 
     /* ── Chat Feed ─────────────────────────────── */
     chatHistory: [],
+    isTransitioning: false,
+    nebulaWeather: 'calm',
 
     /* ── Morphological Evolution ────────────────────────── */
     xp: 30000,
@@ -134,6 +196,10 @@ export const usePetStore = create<PetState>()((set, get) => ({
             const newLevel = Math.floor(newXp / 1000) + 1;
             return { xp: newXp, level: newLevel };
         }),
+    updateGenes: (newGenes) =>
+        set((s) => ({
+            genes: { ...s.genes, ...newGenes }
+        })),
 
     /* memory */
     addMemory: (text) =>
@@ -184,7 +250,13 @@ export const usePetStore = create<PetState>()((set, get) => ({
         set((s) => ({
             chatHistory: [
                 ...s.chatHistory,
-                { ...msg, id: `chat-${Date.now()}-${Math.random()}`, timestamp: Date.now() }
+                { ...msg, id: msg.id || `chat-${Date.now()}-${Math.random()}`, timestamp: Date.now() }
             ].slice(-20) // Keep last 20 messages max
-        }))
+        })),
+    removeChatMessage: (id) =>
+        set((s) => ({
+            chatHistory: s.chatHistory.filter((m) => m.id !== id)
+        })),
+    setIsTransitioning: (v) => set({ isTransitioning: v }),
+    setNebulaWeather: (w) => set({ nebulaWeather: w })
 }));

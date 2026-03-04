@@ -67,22 +67,20 @@ html {
   -webkit-tap-highlight-color: transparent;
 }
 
+html,
+body {
+  height: 100%;
+  overflow: hidden;
+  position: fixed;
+  width: 100%;
+}
+
 body {
   background: var(--vibe-bg);
   color: var(--vibe-text);
   font-family: var(--vibe-font);
   -webkit-font-smoothing: antialiased;
   -moz-osx-font-smoothing: grayscale;
-  overflow-x: hidden;
-}
-
-/* Hide scrollbar for mobile-first feel */
-body::-webkit-scrollbar {
-  display: none;
-}
-
-body {
-  scrollbar-width: none;
 }
 
 /* ── Glow Animation ────────────────────────────────────── */

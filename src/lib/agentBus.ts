@@ -25,7 +25,14 @@ if (!globalThis.__agentBus) {
 /* Allow many concurrent SSE connections */
 agentBus.setMaxListeners(100);
 
-export type AgentAction = "update_status" | "post_echo" | "deliver_souvenir" | "update_ui_state" | "post_chat_message";
+export type AgentAction =
+    | "update_status"
+    | "post_echo"
+    | "deliver_souvenir"
+    | "update_ui_state"
+    | "post_chat_message"
+    | "update_orb"   // ← NEW: push generative orb HTML or a prompt
+    | "update_genes"; // ← NEW: generative 3d morphology
 
 export interface AgentEvent {
     action: AgentAction;
